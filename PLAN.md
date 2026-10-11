@@ -155,9 +155,31 @@ diagrams in the style of an old natural-history atlas.
   smoke tests of every plate.
 
 ## Milestones
-1. Scaffold, group data pipeline, data tests.
-2. CPU reference engine and physics tests.
-3. WebGPU engine and renderer, plus a dev page running all groups.
-4. Atlas site: hero, cabinet, explainer, plates, interaction.
-5. Lab, performance, polish.
-6. Later: 3D.
+1. ~~Scaffold, group data pipeline, data tests.~~ Done.
+2. ~~CPU reference engine and physics tests.~~ Done.
+3. ~~WebGPU engine and renderer, plus a dev page running all groups.~~ Done.
+   The GPU matches the CPU to float32 precision, NPT included.
+4. ~~Atlas site: hero, cabinet, explainer, plates, interaction.~~ Done.
+5. ~~Lab~~ (custom generators, export). Done. Performance and polish are
+   ongoing.
+6. Later: 3D. The group tables load and pass tests. Still needed: a 3D
+   kernel instantiation (`makeLayout(3)`), a sphere renderer, and 3D
+   asymmetric-unit sampling.
+
+## As built: conventions worth knowing
+* Engine `T` is the true temperature of the crystal. The UI sliders and
+  readouts use the per-orbit temperature `T* = T / φ` with
+  `φ = N_cell / n`, so one slider range works for every group. Release
+  converts the system to p1 at `T = T*`.
+* `P` is the true pressure in both the engine and the UI.
+* The engine has no instantaneous (virial) pressure. The pressure readout
+  shows the barostat setting.
+* The GPU slots and limits are in `src/engine/gpu/layout.ts`:
+  - per system: 256 reps, 768 particles per cell, group order ≤ 12, at
+    most 10 Wyckoff sites;
+  - lattice images: at most 4 per dimension;
+  - 64 systems in total.
+* Systems step only while their canvas is visible. Protocols advance with
+  the system, so each plate grows its crystal when you arrive.
+* Without WebGPU, the page shows the notice. Each simulation slot falls
+  back to a static Canvas2D toy preview (`src/site/sim/placeholder`).
