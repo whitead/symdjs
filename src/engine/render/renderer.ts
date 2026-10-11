@@ -29,6 +29,8 @@ export interface ViewOptions {
   paper: string | null;
   highlightRep: number;
   maxDpr: number;
+  /** draw only the home unit cell (no lattice copies) */
+  homeOnly: boolean;
 }
 
 /** The paper's Figure 2 palette, ordered so consecutive indices contrast. */
@@ -49,6 +51,7 @@ export const defaultViewOptions: ViewOptions = {
   paper: null,
   highlightRep: -1,
   maxDpr: 2,
+  homeOnly: false,
 };
 
 function hexToRgba(hex: string, alpha = 1): [number, number, number, number] {
@@ -220,12 +223,16 @@ export class SimView {
       fy1 = Math.max(fy1, fy);
     }
     // margin of one tile for box changes not yet read back
-    const x0 = Math.floor(fx0) - 1;
-    const y0 = Math.floor(fy0) - 1;
-    let nx = Math.ceil(fx1) - x0 + 1;
-    let ny = Math.ceil(fy1) - y0 + 1;
-    nx = Math.min(nx, 80);
-    ny = Math.min(ny, 80);
+    let x0 = Math.floor(fx0) - 1;
+    let y0 = Math.floor(fy0) - 1;
+    let nx = Math.min(Math.ceil(fx1) - x0 + 1, 80);
+    let ny = Math.min(Math.ceil(fy1) - y0 + 1, 80);
+    if (o.homeOnly) {
+      x0 = 0;
+      y0 = 0;
+      nx = 1;
+      ny = 1;
+    }
 
     // uniforms
     const f = new Float32Array(this.viewData);
@@ -246,7 +253,7 @@ export class SimView {
     f[12] = o.radius;
     f[13] = pxPerSigma;
     i32[14] = o.highlightRep;
-    u[15] = (o.markReps ? 1 : 0) | (o.ghostAlpha < 1 ? 2 : 0);
+    u[15] = (o.markReps ? 1 : 0) | (o.ghostAlpha < 0.999 ? 2 : 0);
     f[16] = o.ghostAlpha;
     f[17] = performance.now() / 1000;
     u[18] = n;

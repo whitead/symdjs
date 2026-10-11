@@ -102,7 +102,10 @@ fn fs(in: VSOut) -> @location(0) vec4f {
     let ring = smoothstep(0.70 - aa, 0.70, r) * (1.0 - smoothstep(0.86, 0.86 + aa, r));
     col = mix(col, view.ink.rgb, ring);
   }
-  if ((view.flags & 2u) != 0u && !isRep) { a = a * view.ghostAlpha; }
+  if ((view.flags & 2u) != 0u && !isRep) {
+    a = a * view.ghostAlpha;
+    if (a <= 0.001) { discard; }
+  }
   if (view.highlightRep >= 0) {
     if ((in.kind & 2u) != 0u) {
       // every image of the grabbed particle gets a bold ink ring
