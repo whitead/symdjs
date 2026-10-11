@@ -7,7 +7,7 @@ import { boxFromParams } from "../groups/bravais";
 import type { GpuEngine, GpuSystem } from "../gpu/engine";
 import { discShader, lineShader, MAX_COLORS } from "./shaders";
 
-export type ColorMode = "rep" | "op" | "site" | "ink" | "kind" | "hand";
+export type ColorMode = "rep" | "op" | "site" | "ink" | "kind" | "hand" | "wyckoff";
 
 export interface ViewOptions {
   /** σ visible across the shorter canvas side */
@@ -47,6 +47,16 @@ export interface ViewOptions {
 
 /** Few-colour palettes: site kind (general, line, point) and handedness (proper, improper). */
 export const KIND_PALETTE = ["#577590", "#f8961e", "#f94144"];
+/**
+ * One colour per Wyckoff site: index 0 is the general position (slate), then
+ * special sites a, b, c, … in order. Shared with the site chips.
+ */
+export const WYCKOFF_PALETTE = ["#577590", "#f94144", "#f8961e", "#43aa8b", "#f9c74f", "#277da1", "#90be6d", "#f3722c", "#4d908e", "#f9844a"];
+
+/** Colour of a site (by index into group.sites, general position last). */
+export function wyckoffColor(siteIndex: number, nSites: number): string {
+  return siteIndex === nSites - 1 ? WYCKOFF_PALETTE[0] : WYCKOFF_PALETTE[(1 + siteIndex) % WYCKOFF_PALETTE.length];
+}
 export const HAND_PALETTE = ["#577590", "#43aa8b"];
 
 /** The paper's Figure 2 palette, ordered so consecutive indices contrast. */
@@ -289,7 +299,7 @@ export class SimView {
     u[7] = ny;
     u[8] = sys.slot;
     u[9] = nCell;
-    u[10] = { rep: 0, op: 1, site: 2, ink: 3, kind: 4, hand: 5 }[o.colorMode];
+    u[10] = { rep: 0, op: 1, site: 2, ink: 3, kind: 4, hand: 5, wyckoff: 6 }[o.colorMode];
     u[11] = Math.min(o.palette.length, MAX_COLORS);
     f[12] = o.radius;
     f[13] = pxPerSigma;

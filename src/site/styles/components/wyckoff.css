@@ -34,12 +34,8 @@
   box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 1px 2px rgb(31 36 48 / 0.06);
 }
 
-.wyckoff__chip[data-active][data-kind="point"] {
-  background: linear-gradient(0deg, rgb(249 65 68 / 0.07), rgb(249 65 68 / 0.07)), var(--paper-raised);
-}
-
-.wyckoff__chip[data-active][data-kind="line"] {
-  background: linear-gradient(0deg, rgb(248 150 30 / 0.09), rgb(248 150 30 / 0.09)), var(--paper-raised);
+.wyckoff__chip[data-active] {
+  background: color-mix(in srgb, var(--site, var(--ink-3)) 10%, var(--paper-raised));
 }
 
 .wyckoff__site {
@@ -60,15 +56,7 @@
 }
 
 .wyckoff__chip[data-active] .wyckoff__glyph {
-  color: var(--c-slate);
-}
-
-.wyckoff__chip[data-active][data-kind="point"] .wyckoff__glyph {
-  color: var(--c-vermilion);
-}
-
-.wyckoff__chip[data-active][data-kind="line"] .wyckoff__glyph {
-  color: var(--c-saffron);
+  color: var(--site, var(--ink-2));
 }
 
 .wyckoff__mult {

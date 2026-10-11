@@ -1,8 +1,10 @@
 // Wyckoff occupancy editor: one chip per site letter showing its
-// multiplicity ("4e"), what kind of site it is, and a −/+ stepper for how
-// many independent particles sit there.
+// multiplicity ("4e"), what kind of site it is (in the site's particle
+// colour), and a −/+ stepper for how many independent particles sit there.
 
+import type { CSSProperties } from "react";
 import type { Group, WyckoffSite } from "../../engine/groups/group";
+import { wyckoffColor } from "../../engine/render/renderer";
 import { cellCount, maxCount, repCount, siteKind, type Occupancy } from "../lib/groups";
 import { MinusIcon, PlusIcon } from "./Icons";
 import "../styles/components/wyckoff.css";
@@ -50,13 +52,20 @@ export function WyckoffEditor({ group, value, onChange, summary = true, classNam
   return (
     <div className={["wyckoff", className].filter(Boolean).join(" ")}>
       <ul className="wyckoff__chips">
-        {group.sites.map((site) => {
+        {group.sites.map((site, si) => {
           const n = value[site.letter] ?? 0;
           const max = maxCount(site, group.order);
           const kind = siteKind(site);
           const desc = `Site ${site.label}, ${KIND_TEXT[kind]}, ${site.multiplicity} image${site.multiplicity > 1 ? "s" : ""} per cell`;
           return (
-            <li key={site.letter} className="wyckoff__chip" data-kind={kind} data-active={n > 0 || undefined} title={desc}>
+            <li
+              key={site.letter}
+              className="wyckoff__chip"
+              data-kind={kind}
+              data-active={n > 0 || undefined}
+              title={desc}
+              style={{ "--site": wyckoffColor(si, group.sites.length) } as CSSProperties}
+            >
               <span className="wyckoff__site">
                 <SiteGlyph site={site} />
                 <span className="wyckoff__mult">{site.multiplicity}</span>

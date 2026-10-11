@@ -21,6 +21,8 @@ export interface SimSlotProps {
   occupancy?: Occupancy;
   /** "How it works" step to illustrate (explainer only) */
   stage?: ExplainerStage;
+  /** run without the symmetry constraint (a p1 supercell of the current cell) */
+  released?: boolean;
   /** accessible description of what the simulation shows */
   label?: string;
   /** overlays rendered above the canvas (captions, hints) */
@@ -36,6 +38,7 @@ export function SimSlot({
   group = "p4m",
   occupancy,
   stage,
+  released,
   label,
   children,
 }: SimSlotProps) {
@@ -52,7 +55,7 @@ export function SimSlot({
   const wantsPlay = userPlaying ?? !reducedMotion;
   const mode: SimMode = !wantsPlay ? (userPlaying === false ? "paused" : "static") : inView ? "live" : "paused";
 
-  useGpuSim(canvasRef, size, { variant, group, occupancy: occ, seed, stage, interactive: INTERACTIVE[variant], reducedMotion }, mode);
+  useGpuSim(canvasRef, size, { variant, group, occupancy: occ, seed, stage, released, interactive: INTERACTIVE[variant], reducedMotion }, mode);
 
   const toggle = useCallback(() => setUserPlaying(!wantsPlay), [wantsPlay]);
 

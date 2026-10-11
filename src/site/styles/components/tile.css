@@ -2,7 +2,7 @@
 
 .tile {
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: auto auto 1fr auto;
   border: 1px solid var(--rule-mid);
   background: var(--paper-raised);
   box-shadow: var(--shadow-card);
@@ -69,7 +69,13 @@
 
 .tile__wyckoff {
   align-self: start;
-  padding: 0.35rem 0.6rem 0.65rem;
+  padding: 0.35rem 0.6rem 0.4rem;
+}
+
+.tile__foot {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 0.45rem 0.5rem;
 }
 
 /* compact Wyckoff chips for the tiles */

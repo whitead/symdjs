@@ -1,10 +1,13 @@
 // One plane group in the atlas grid: a live simulation, its name, a small
-// symmetry diagram, and the Wyckoff sites you can fill.
+// symmetry diagram, the Wyckoff sites you can fill, and a switch to release
+// the symmetry.
 
 import { useState } from "react";
 import type { Group } from "../../engine/groups/group";
 import { cellCount, toRoman, type Occupancy } from "../lib/groups";
+import { Button } from "./Button";
 import { HM, Orbifold } from "./GroupSymbol";
+import { LockIcon, UnlockIcon } from "./Icons";
 import { SimSlot } from "./SimSlot";
 import { SymmetryDiagram } from "./SymmetryDiagram";
 import { WyckoffEditor } from "./WyckoffEditor";
@@ -18,6 +21,12 @@ export interface TileProps {
 
 export function Tile({ group, initial, seed }: TileProps) {
   const [occupancy, setOccupancy] = useState<Occupancy>(initial);
+  const [released, setReleased] = useState(false);
+  // a released crystal has no Wyckoff sites to edit: editing restores the symmetry
+  const editSites = (occ: Occupancy) => {
+    setReleased(false);
+    setOccupancy(occ);
+  };
   return (
     <li className="tile" id={`plate-${group.name}`}>
       <div className="tile__mat">
@@ -26,7 +35,8 @@ export function Tile({ group, initial, seed }: TileProps) {
           group={group.name}
           occupancy={occupancy}
           seed={seed}
-          label={`Live ${group.name} simulation. Press and move to touch it.`}
+          released={released}
+          label={`Live ${group.name} simulation${released ? " with its symmetry released" : ""}. Press and move to touch it.`}
         />
       </div>
       <div className="tile__label">
@@ -42,7 +52,20 @@ export function Tile({ group, initial, seed }: TileProps) {
         </div>
         <SymmetryDiagram group={group} size={52} showAsym showWyckoff={false} className="tile__diagram" />
       </div>
-      <WyckoffEditor className="wyckoff--compact tile__wyckoff" group={group} value={occupancy} onChange={setOccupancy} summary={false} />
+      <WyckoffEditor className="wyckoff--compact tile__wyckoff" group={group} value={occupancy} onChange={editSites} summary={false} />
+      <div className="tile__foot">
+        <Button
+          size="s"
+          variant="quiet"
+          tone={released ? "alarm" : "ink"}
+          pressed={released}
+          icon={released ? <UnlockIcon /> : <LockIcon />}
+          onClick={() => setReleased((r) => !r)}
+          title={released ? "Put the symmetry constraint back" : "Run without symmetry: every copy becomes a free particle"}
+        >
+          {released ? "Restore symmetry" : "Release symmetry"}
+        </Button>
+      </div>
     </li>
   );
 }

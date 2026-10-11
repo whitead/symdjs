@@ -16,6 +16,8 @@ export interface SimDriverOptions {
   occupancy: Occupancy;
   seed: number;
   stage?: ExplainerStage;
+  /** symmetry released: every ghost becomes a free particle */
+  released?: boolean;
   interactive: boolean;
   reducedMotion: boolean;
 }

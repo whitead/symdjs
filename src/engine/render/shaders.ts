@@ -83,6 +83,10 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VSOut
     let k = topo[view.slot * TOPO_STRIDE + OFF_SITES + si * SITEW + 6u];
     idx = select(select(1u, 2u, k == 0u), 0u, k == 2u);
   }
+  else if (view.colorMode == 6u) {
+    // one colour per Wyckoff site: the general position first, then each special site
+    idx = select(1u + si, 0u, si == view.generalSite);
+  }
   else if (view.colorMode == 5u) {
     // handedness: proper ops (rotations) 0, improper (mirror images) 1
     idx = select(0u, 1u, determinant(R) < 0.0);

@@ -10,7 +10,7 @@ import type { PotentialSpec } from "../../engine/core/potentials";
 import { initialState } from "../../engine/core/system";
 import type { GpuSystem } from "../../engine/gpu/engine";
 import { planeGroup } from "../../engine/groups/library";
-import { HAND_PALETTE, KIND_PALETTE, type SimView, type ViewOptions } from "../../engine/render/renderer";
+import { HAND_PALETTE, WYCKOFF_PALETTE, type SimView, type ViewOptions } from "../../engine/render/renderer";
 import type { HubView, SimHub } from "../../sim/hub";
 import { attachProbe, releaseSymmetry } from "../../sim/interact";
 import type { CanvasSize } from "../hooks/useCanvasSize";
@@ -24,8 +24,8 @@ const LJ: PotentialSpec = { kind: "lj", epsilon: 1, sigma: 1, rc: 3 };
 /** live dynamics: per-orbit temperature, friction, number density */
 const LIVE = { Tstar: 0.28, gamma: 0.2, density: 0.25 };
 
-/** colour by site kind (general / line / point), or by handedness of the op */
-const KIND: Partial<ViewOptions> = { colorMode: "kind", palette: KIND_PALETTE };
+/** colour by Wyckoff site (one colour each), or by handedness of the op */
+const SITE: Partial<ViewOptions> = { colorMode: "wyckoff", palette: WYCKOFF_PALETTE };
 const HAND: Partial<ViewOptions> = { colorMode: "hand", palette: HAND_PALETTE };
 
 interface VariantConfig {
@@ -40,8 +40,8 @@ interface VariantConfig {
 }
 
 const VARIANTS: Record<SimVariant, VariantConfig> = {
-  hero: { scale: 24, compactScale: 16, steps: 20, growSteps: 300, view: { ...KIND, showCell: false, showGrid: false } },
-  tile: { scale: 12, compactScale: 11, steps: 20, growSteps: 300, view: { ...KIND, showCell: true, showGrid: true, gridAlpha: 0.06 } },
+  hero: { scale: 24, compactScale: 16, steps: 20, growSteps: 300, view: { ...SITE, showCell: false, showGrid: false } },
+  tile: { scale: 12, compactScale: 11, steps: 20, growSteps: 300, view: { ...SITE, showCell: true, showGrid: true, gridAlpha: 0.06 } },
   explainer: { scale: 15, compactScale: 12, steps: 40, growSteps: 60, view: { ...HAND } },
 };
 
@@ -73,11 +73,11 @@ function stageLook(stage: ExplainerStage): StageLook {
     case "tiling":
       return { view: { ...BASE_STAGE, tileAlpha: 0.45, gridAlpha: 0.16 }, cells: 3.4 };
     case "lattice":
-      return { view: { ...BASE_STAGE, ...KIND, gridAlpha: 0.5 }, cells: 3.2 };
+      return { view: { ...BASE_STAGE, ...SITE, gridAlpha: 0.5 }, cells: 3.2 };
     case "wyckoff":
-      return { view: { ...BASE_STAGE, ...KIND, generalAlpha: 0.22, markReps: true, showAsym: true }, cells: 3 };
+      return { view: { ...BASE_STAGE, ...SITE, generalAlpha: 0.22, markReps: true, showAsym: true }, cells: 3 };
     case "release":
-      return { view: { ...BASE_STAGE, ...KIND, showCell: false, gridAlpha: 0.06 }, cells: 4.2 };
+      return { view: { ...BASE_STAGE, ...SITE, showCell: false, gridAlpha: 0.06 }, cells: 4.2 };
   }
 }
 
@@ -108,7 +108,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
 
   const { variant, group, seed, stage } = opts;
   const occKey = occupancyKey(opts.occupancy);
-  const released = stage === "release";
+  const released = !!opts.released || stage === "release";
   const hasCanvas = !!size;
 
   // ---- create the system and view ----
@@ -257,7 +257,9 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     if (!hub || !hv || !sym) return;
     let cancelled = false;
     if (released && !relRef.current) {
-      releaseSymmetry(hub.engine, sym, { gamma: 0.5 }).then(
+      // keep the same per-particle temperature and light friction as the live run
+      const relParams = variant === "explainer" ? { gamma: 0.5 } : { gamma: LIVE.gamma, forceCap: 2000 };
+      releaseSymmetry(hub.engine, sym, relParams).then(
         (rel) => {
           if (cancelled || symRef.current !== sym || hvRef.current !== hv || relRef.current) {
             rel.dispose();
