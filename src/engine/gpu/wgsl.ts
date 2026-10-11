@@ -34,7 +34,7 @@ struct Sys {
   potCode: u32, latR: u32, flags: u32, probeOn: i32,
   T: f32, P: f32, gamma: f32, dt: f32,
   eps: f32, sig: f32, rc: f32, shift: f32,
-  forceCap: f32, probeA: f32, mcMaxDelta: f32, pad1: f32,
+  forceCap: f32, probeA: f32, mcMaxDelta: f32, minDensity: f32,
   probe: vec4f,
   M: array<f32, 64>,
 }
@@ -311,7 +311,7 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
         if (ok) {
           wc.BinvT = inv2(wc.BT);
           wc.VT = determinant(wc.BT);
-          ok = shapeOk(wc.BT) && setupTrans(wc.BT, wc.BinvT, S.rc);
+          ok = (S.minDensity <= 0.0 || f32(S.nCell) / wc.VT >= S.minDensity) && shapeOk(wc.BT) && setupTrans(wc.BT, wc.BinvT, S.rc);
         }
         wFlag = select(0u, 1u, ok);
       }

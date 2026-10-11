@@ -30,6 +30,8 @@ export interface SimParams {
   mcAdapt: boolean;
   /** upper bound on the relative box-move step (small values make the box drift smoothly) */
   mcMaxDelta: number;
+  /** box moves below this number density are rejected (bounds P ≤ 0; 0 = off) */
+  minDensity: number;
 }
 
 export interface SystemSpec {
@@ -52,6 +54,7 @@ export const defaultParams: SimParams = {
   nptEvery: 4,
   mcAdapt: true,
   mcMaxDelta: 0.05,
+  minDensity: 0,
 };
 
 /** Static description shared by CPU and GPU engines. */

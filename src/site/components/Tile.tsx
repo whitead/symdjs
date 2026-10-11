@@ -17,8 +17,8 @@ export interface TileProps {
   group: Group;
   initial: Occupancy;
   seed: number;
-  /** barostat pressure shared by the atlas (null = fixed volume) */
-  pressure: number | null;
+  /** barostat pressure shared by the atlas (negative = tension) */
+  pressure: number;
 }
 
 export function Tile({ group, initial, seed, pressure }: TileProps) {

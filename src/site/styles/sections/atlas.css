@@ -8,20 +8,17 @@
   list-style: none;
 }
 
-/* the pressure control stays in reach while scrolling the grid */
+/* the pressure control stays in reach while scrolling the grid; it sits at
+   the grid's left edge and is only as wide as it needs to be */
 .atlas__controls {
   position: sticky;
-  top: 0;
+  top: 0.5rem;
   z-index: 5;
-  width: min(100% - 2 * var(--gutter), 104rem);
-  margin: var(--space-xl) auto 0;
-  padding: 0.6rem 0.9rem 0.7rem;
+  width: min(100% - 2 * var(--gutter), 20rem);
+  margin: var(--space-xl) 0 0 max(var(--gutter), calc((100% - 104rem) / 2));
+  padding: 0.5rem 0.8rem 0.55rem;
   border: 1px solid var(--rule-mid);
   background: rgb(251 250 242 / 0.92);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow-card);
-}
-
-.atlas__pressure {
-  max-width: 34rem;
 }

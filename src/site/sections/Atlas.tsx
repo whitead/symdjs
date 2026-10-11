@@ -9,15 +9,31 @@ import { Tile } from "../components/Tile";
 import { planeGroups, randomOccupancy } from "../lib/groups";
 import "../styles/sections/atlas.css";
 
-/** Slider position 0 is fixed volume; 1…100 map logarithmically onto P = 0.002…2. */
+/**
+ * Slider position x ∈ [−100, 100] maps onto pressure with a signed log scale:
+ * 0 is P = 0, and ±1…±100 span |P| = 0.002…2 (negative = tension).
+ */
 const P_MIN = 0.002;
 const P_MAX = 2;
-function pressureAt(x: number): number | null {
-  return x <= 0 ? null : P_MIN * Math.pow(P_MAX / P_MIN, (x - 1) / 99);
+function pressureAt(x: number): number {
+  if (x === 0) return 0;
+  return Math.sign(x) * P_MIN * Math.pow(P_MAX / P_MIN, (Math.abs(x) - 1) / 99);
 }
 
+function formatPressure(p: number): string {
+  if (p === 0) return "0";
+  const a = Math.abs(p);
+  return (p < 0 ? "−" : "") + (a < 0.1 ? a.toFixed(3) : a.toFixed(2));
+}
+
+/** default slider position */
+const DEFAULT_PX = 0;
+
 export function Atlas() {
-  const [px, setPx] = useState(0);
+  const [px, setPx] = useState(() => {
+    const q = new URLSearchParams(window.location.search).get("p");
+    return q !== null && Number.isFinite(Number(q)) ? Math.max(-100, Math.min(100, Number(q))) : DEFAULT_PX;
+  });
   const pressure = pressureAt(px);
   // a different arrangement of Wyckoff sites on every visit
   const [seed] = useState(() => 1 + ((Math.random() * 1e6) | 0));
@@ -42,9 +58,8 @@ export function Atlas() {
           }
         >
           <p>
-            There are exactly seventeen ways to repeat a pattern in the plane. Each one runs here as Lennard-Jones
-            particles in which only the asymmetric unit moves freely and every other particle is its symmetric copy.
-            The chips beneath each group are its Wyckoff sites; add or remove particles on them.
+            This is showing a method to constrain simulations to follow a tiling group. There are seventeen ways to tile a
+            plane in 2D. Below are Lennard-Jones simulations for each of those seventeen tilings.
           </p>
         </SectionHeader>
       </div>
@@ -53,14 +68,11 @@ export function Atlas() {
           label="Pressure"
           symbol="P"
           value={px}
-          min={0}
+          min={-100}
           max={100}
           step={1}
           ticks={10}
-          format={(x) => {
-            const p = pressureAt(x);
-            return p === null ? "fixed volume" : p < 0.1 ? p.toFixed(3) : p.toFixed(2);
-          }}
+          format={(x) => formatPressure(pressureAt(x))}
           onChange={setPx}
           className="atlas__pressure"
         />

@@ -326,7 +326,8 @@ export class CpuSim {
     this.mc.winAtt++;
     const trial = Math.abs(p2[k] - cur.p[k]) <= this.mc.delta * s2 ? this.makeBox(p2) : null;
     let accepted = false;
-    if (trial && this.shapeOk(trial.B)) {
+    const tooSparse = !!trial && this.params.minDensity > 0 && this.data.nCell / trial.V < this.params.minDensity;
+    if (trial && !tooSparse && this.shapeOk(trial.B)) {
       const U2 = this.computeForces(trial, this.fTrial, this.eTrial);
       const { siteOf } = this.data;
       let dlogJ = 0;

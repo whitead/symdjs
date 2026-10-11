@@ -242,7 +242,10 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
           gamma: LIVE.gamma,
           P,
           nptEvery: breathing ? 2 : 8,
-          mcMaxDelta: 0.01,
+          // small box moves: the cell drifts rather than jitters
+          mcMaxDelta: 0.004,
+          // at zero or negative pressure nothing else bounds the box
+          minDensity: 0.1,
           potential: LJ,
           forceCap: 2000,
         });

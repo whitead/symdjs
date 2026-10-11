@@ -276,6 +276,7 @@ export class GpuEngine {
     f[SYS.forceCap] = Number.isFinite(params.forceCap) ? params.forceCap : 0;
     f[SYS.probeA] = sys.probe ? sys.probe.strength : 0;
     f[SYS.mcMaxDelta] = params.mcMaxDelta;
+    f[SYS.minDensity] = params.minDensity;
     if (sys.probe) {
       f[SYS.probe] = sys.probe.at[0];
       f[SYS.probe + 1] = sys.probe.at[1];
