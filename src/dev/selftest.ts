@@ -14,7 +14,12 @@ export function runSelftest() {
   const at = new URLSearchParams(location.search).get("at");
   if (at) setTimeout(() => document.querySelector(at)?.scrollIntoView({ block: "start" }), 800);
   let hubFrames = 0;
-  import("../sim/hub").then(({ SimHub }) => SimHub.get().then((hub) => hub.onFrame(() => hubFrames++)));
+  import("../sim/hub").then(({ SimHub }) =>
+    SimHub.get().then(
+      (hub) => hub.onFrame(() => hubFrames++),
+      () => {}, // no WebGPU: nothing to count
+    ),
+  );
   let frames = 0;
   const count = () => {
     frames++;
@@ -40,6 +45,7 @@ export function runSelftest() {
       for (let k = 3; k < px.length; k += 16) if (px[k] > 0) n++;
       report.push(`canvas ${i} (${c.getAttribute("aria-label")?.slice(0, 40)}): ${c.width}x${c.height} drawn≈${((100 * n * 4) / (px.length / 4)).toFixed(1)}%`);
     });
+    report.push(`webgpu notice shown: ${document.querySelector(".gpu-notice") ? "yes" : "no"} · title: ${document.querySelector("h1")?.textContent ?? "(none)"}`);
     report.push(`errors: ${errors.length ? errors.join(" | ") : "none"}`);
     report.push("DONE");
     fetch("http://localhost:5199/log", { method: "POST", body: report.join("\n") }).catch(() => {});
