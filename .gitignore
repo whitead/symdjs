@@ -8,3 +8,6 @@ playwright-report/
 .DS_Store
 # reference paper (not redistributed)
 *.pdf
+
+# Claude Code agent worktrees
+.claude/
