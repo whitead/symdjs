@@ -42,7 +42,7 @@ interface VariantConfig {
 const VARIANTS: Record<SimVariant, VariantConfig> = {
   hero: { scale: 24, compactScale: 16, steps: 20, growSteps: 300, view: { ...SITE, showCell: false, showGrid: false } },
   tile: { scale: 12, compactScale: 11, steps: 20, growSteps: 300, view: { ...SITE, showCell: true, showGrid: true, gridAlpha: 0.06 } },
-  explainer: { scale: 15, compactScale: 12, steps: 40, growSteps: 60, view: { ...HAND } },
+  explainer: { scale: 15, compactScale: 12, steps: 12, growSteps: 60, view: { ...HAND } },
 };
 
 interface StageLook {
