@@ -1,4 +1,4 @@
-# An atlas of all 2D crystals
+# An atlas of 2D crystals
 
 With symmetric molecular dynamics: live Lennard-Jones simulations under every two-dimensional plane group
 and Wyckoff site, running on the GPU in your browser.

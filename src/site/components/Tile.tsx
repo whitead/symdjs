@@ -17,9 +17,11 @@ export interface TileProps {
   group: Group;
   initial: Occupancy;
   seed: number;
+  /** barostat pressure shared by the atlas (null = fixed volume) */
+  pressure: number | null;
 }
 
-export function Tile({ group, initial, seed }: TileProps) {
+export function Tile({ group, initial, seed, pressure }: TileProps) {
   const [occupancy, setOccupancy] = useState<Occupancy>(initial);
   const [released, setReleased] = useState(false);
   // a released crystal has no Wyckoff sites to edit: editing restores the symmetry
@@ -36,6 +38,7 @@ export function Tile({ group, initial, seed }: TileProps) {
           occupancy={occupancy}
           seed={seed}
           released={released}
+          pressure={pressure}
           label={`Live ${group.name} simulation${released ? " with its symmetry released" : ""}. Press and move to touch it.`}
         />
       </div>
@@ -57,13 +60,14 @@ export function Tile({ group, initial, seed }: TileProps) {
         <Button
           size="s"
           variant="quiet"
-          tone={released ? "alarm" : "ink"}
-          pressed={released}
+          className="tile__symmetry"
+          data-released={released || undefined}
+          pressed={!released}
           icon={released ? <UnlockIcon /> : <LockIcon />}
           onClick={() => setReleased((r) => !r)}
-          title={released ? "Put the symmetry constraint back" : "Run without symmetry: every copy becomes a free particle"}
+          title={released ? "Symmetry released: every copy is a free particle. Click to restore." : "Symmetry on. Click to release it: every copy becomes a free particle."}
         >
-          {released ? "Restore symmetry" : "Release symmetry"}
+          symmetry
         </Button>
       </div>
     </li>

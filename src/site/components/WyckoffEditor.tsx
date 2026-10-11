@@ -5,7 +5,7 @@
 import type { CSSProperties } from "react";
 import type { Group, WyckoffSite } from "../../engine/groups/group";
 import { wyckoffColor } from "../../engine/render/renderer";
-import { cellCount, maxCount, repCount, siteKind, type Occupancy } from "../lib/groups";
+import { MAX_CELL, MAX_REPS, cellCount, maxCount, repCount, siteKind, type Occupancy } from "../lib/groups";
 import { MinusIcon, PlusIcon } from "./Icons";
 import "../styles/components/wyckoff.css";
 
@@ -47,6 +47,7 @@ function SiteGlyph({ site }: { site: WyckoffSite }) {
 
 export function WyckoffEditor({ group, value, onChange, summary = true, className }: WyckoffEditorProps) {
   const total = repCount(value);
+  const perCell = cellCount(group, value);
   const set = (letter: string, n: number) => onChange({ ...value, [letter]: n });
 
   return (
@@ -86,7 +87,7 @@ export function WyckoffEditor({ group, value, onChange, summary = true, classNam
                 <button
                   type="button"
                   onClick={() => set(site.letter, n + 1)}
-                  disabled={n >= max}
+                  disabled={n >= max || total + 1 > MAX_REPS || perCell + site.multiplicity > MAX_CELL}
                   aria-label={`Add a particle to ${site.label}`}
                 >
                   <PlusIcon size={11} />
@@ -103,7 +104,7 @@ export function WyckoffEditor({ group, value, onChange, summary = true, classNam
           </span>
           <span aria-hidden="true">→</span>
           <span>
-            <b>{cellCount(group, value)}</b> per cell
+            <b>{perCell}</b> per cell
           </span>
         </p>
       )}

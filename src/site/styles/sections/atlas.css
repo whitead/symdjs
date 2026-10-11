@@ -3,7 +3,25 @@
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
   gap: clamp(0.6rem, 0.3rem + 1vw, 1.1rem);
   width: min(100% - 2 * var(--gutter), 104rem);
-  margin: var(--space-xl) auto 0;
+  margin: var(--space-m) auto 0;
   padding: 0;
   list-style: none;
+}
+
+/* the pressure control stays in reach while scrolling the grid */
+.atlas__controls {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  width: min(100% - 2 * var(--gutter), 104rem);
+  margin: var(--space-xl) auto 0;
+  padding: 0.6rem 0.9rem 0.7rem;
+  border: 1px solid var(--rule-mid);
+  background: rgb(251 250 242 / 0.92);
+  backdrop-filter: blur(6px);
+  box-shadow: var(--shadow-card);
+}
+
+.atlas__pressure {
+  max-width: 34rem;
 }

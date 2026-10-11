@@ -39,7 +39,7 @@ export function Hero() {
         <h1 className="hero__title">
           <span className="hero__pre">An atlas of</span>{" "}
           <span className="hero__main">
-            <em>all</em> 2D crystals
+            2D <em>crystals</em>
           </span>
         </h1>
         <p className="hero__subtitle">with symmetric molecular dynamics</p>

@@ -28,6 +28,8 @@ export interface SimParams {
   nptEvery: number;
   /** adapt the box-move step size toward 20–50% acceptance (breaks detailed balance slightly) */
   mcAdapt: boolean;
+  /** upper bound on the relative box-move step (small values make the box drift smoothly) */
+  mcMaxDelta: number;
 }
 
 export interface SystemSpec {
@@ -49,6 +51,7 @@ export const defaultParams: SimParams = {
   forceCap: Infinity,
   nptEvery: 4,
   mcAdapt: true,
+  mcMaxDelta: 0.05,
 };
 
 /** Static description shared by CPU and GPU engines. */

@@ -18,6 +18,10 @@ export interface SimDriverOptions {
   stage?: ExplainerStage;
   /** symmetry released: every ghost becomes a free particle */
   released?: boolean;
+  /** barostat pressure P (null = fixed volume); live hero/tile systems only */
+  pressure?: number | null;
   interactive: boolean;
   reducedMotion: boolean;
+  /** shown full screen (the camera zooms in a little) */
+  maximized?: boolean;
 }

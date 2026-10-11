@@ -102,3 +102,81 @@
   transform: none;
 }
 
+
+/* ---- maximize ---------------------------------------------------------- */
+
+.sim-slot__max {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: rgb(251 250 242 / 0.86);
+  color: var(--ink-2);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    background var(--dur-fast);
+  backdrop-filter: blur(3px);
+}
+
+.sim-slot:hover .sim-slot__max,
+.sim-slot__max:focus-visible,
+.sim-slot[data-max] .sim-slot__max {
+  opacity: 1;
+}
+
+.sim-slot__max:hover {
+  background: var(--paper-raised);
+  color: var(--ink);
+}
+
+@media (hover: none) {
+  .sim-slot__max {
+    opacity: 0.85;
+  }
+}
+
+.sim-slot--hero .sim-slot__max {
+  z-index: 3;
+  top: calc(var(--frame, 12px) + 0.75rem);
+  right: calc(var(--frame, 12px) + 0.75rem);
+  opacity: 0.8;
+}
+
+/* full screen (Fullscreen API) and the full-window fallback */
+.sim-slot:fullscreen,
+.sim-slot[data-max="overlay"] {
+  width: 100vw;
+  height: 100vh;
+  max-height: none;
+  aspect-ratio: auto;
+  background: var(--paper);
+  outline: none;
+}
+
+.sim-slot[data-max="overlay"] {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.sim-slot:fullscreen .sim-slot__max,
+.sim-slot[data-max="overlay"] .sim-slot__max {
+  top: 1rem;
+  right: 1rem;
+}
+
+.sim-slot:fullscreen .sim-slot__toggle,
+.sim-slot[data-max="overlay"] .sim-slot__toggle {
+  right: 1rem;
+  bottom: 1rem;
+  left: auto;
+}

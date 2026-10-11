@@ -317,6 +317,7 @@ export class CpuSim {
       for (let j = 0; j < r; j++) s = Math.max(s, Math.abs(p[j]));
       return s;
     };
+    this.mc.delta = Math.min(this.mc.delta, this.params.mcMaxDelta);
     const s1 = scaleOf(cur.p);
     const p2 = Float64Array.from(cur.p);
     p2[k] += this.mc.delta * s1 * (2 * uniform4(this.seed ^ MC_STREAM, step, 0, 1) - 1);
@@ -348,7 +349,7 @@ export class CpuSim {
     if (this.params.mcAdapt && this.mc.winAtt >= 32) {
       const rate = this.mc.winAcc / this.mc.winAtt;
       this.mc.rate = rate;
-      if (rate > 0.5) this.mc.delta = Math.min(0.05, this.mc.delta * 1.2);
+      if (rate > 0.5) this.mc.delta = Math.min(this.params.mcMaxDelta, this.mc.delta * 1.2);
       else if (rate < 0.2) this.mc.delta = Math.max(1e-4, this.mc.delta * 0.8);
       this.mc.winAtt = 0;
       this.mc.winAcc = 0;

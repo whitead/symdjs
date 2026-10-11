@@ -34,7 +34,7 @@ struct Sys {
   potCode: u32, latR: u32, flags: u32, probeOn: i32,
   T: f32, P: f32, gamma: f32, dt: f32,
   eps: f32, sig: f32, rc: f32, shift: f32,
-  forceCap: f32, probeA: f32, pad0: f32, pad1: f32,
+  forceCap: f32, probeA: f32, mcMaxDelta: f32, pad1: f32,
   probe: vec4f,
   M: array<f32, 64>,
 }
@@ -293,6 +293,7 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
     if (S.nptEvery > 0u && S.T > 0.0 && (after % S.nptEvery) == 0u) {
       if (t == 0u) {
         let r = S.latR;
+        wc.delta = min(wc.delta, S.mcMaxDelta);
         let k = min(r - 1u, u32(uniform4(S.seed ^ MC_STREAM, after, 0u, 0u) * f32(r)));
         var s1 = 0.0;
         for (var c = 0u; c < r; c++) { s1 = max(s1, abs(wc.p[c])); wc.pT[c] = wc.p[c]; }
@@ -345,7 +346,7 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
         if ((S.flags & FLAG_MC_ADAPT) != 0u && wc.winAtt >= 32u) {
           let rate = f32(wc.winAcc) / f32(wc.winAtt);
           wc.rate = rate;
-          if (rate > 0.5) { wc.delta = min(0.05, wc.delta * 1.2); }
+          if (rate > 0.5) { wc.delta = min(S.mcMaxDelta, wc.delta * 1.2); }
           else if (rate < 0.2) { wc.delta = max(1e-4, wc.delta * 0.8); }
           wc.winAtt = 0u;
           wc.winAcc = 0u;

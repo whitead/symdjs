@@ -169,7 +169,7 @@ export function HowItWorks() {
   return (
     <section className="section how" id="how" aria-labelledby="how-title">
       <div className="wrap">
-        <SectionHeader numeral="II" kicker="How it works" id="how-title" className="wide" title={<>Simulate only what is <em>unique</em></>}>
+        <SectionHeader numeral="II" kicker="Methods" id="how-title" className="wide" title={<>Simulate only what is <em>unique</em></>}>
           <p>
             Symmetric molecular dynamics runs a crystal in a chosen plane group by integrating only its asymmetric unit
             and generating the rest. Six ideas make it work. Scroll through them.

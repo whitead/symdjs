@@ -97,7 +97,7 @@ export const SYS = {
   potCode: 8, latR: 9, flags: 10, probeOn: 11,
   T: 12, P: 13, gamma: 14, dt: 15,
   eps: 16, sig: 17, rc: 18, shift: 19,
-  forceCap: 20, probeA: 21,
+  forceCap: 20, probeA: 21, mcMaxDelta: 22,
   probe: 24, // vec4: fractional x, y, width (σ), unused
   M: 28, // [64], row-major D² × RMAX
 } as const;

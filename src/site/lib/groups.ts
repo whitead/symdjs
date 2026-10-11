@@ -102,11 +102,18 @@ export { planeGroup, planeGroups };
 
 // ---- Wyckoff occupancy -------------------------------------------------
 
-/** Points (k = 0) hold at most one particle; lines and the general position more. */
+/** Capacity of the GPU kernel per system (src/engine/gpu/layout.ts). */
+export const MAX_REPS = 256;
+export const MAX_CELL = 768;
+
+/**
+ * Points (k = 0) hold at most one particle (two would coincide); lines and
+ * the general position are limited only by the GPU kernel's capacity.
+ */
 export function maxCount(site: WyckoffSite, order: number): number {
   if (site.k === 0) return 1;
-  if (!site.general) return 4;
-  return Math.max(4, Math.ceil(40 / order));
+  if (!site.general) return Math.min(64, Math.floor(MAX_CELL / site.multiplicity));
+  return Math.min(MAX_REPS, Math.floor(MAX_CELL / order));
 }
 
 export function cellCount(g: Group, occ: Occupancy): number {

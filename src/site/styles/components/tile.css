@@ -103,3 +103,13 @@
   min-width: 0.9rem;
   font-size: 0.72rem;
 }
+
+/* the symmetry toggle: ink while on, struck-through vermilion once released */
+.tile__symmetry[data-released] {
+  color: var(--vermilion-ink, #c42b2e);
+}
+
+.tile__symmetry[data-released] .btn__label {
+  text-decoration: line-through;
+  text-decoration-thickness: 1px;
+}

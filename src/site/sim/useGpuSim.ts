@@ -5,7 +5,7 @@
 // restarted from a fresh random state.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { growProtocol, liveProtocol, type Protocol } from "../../engine/core/protocol";
+import { liveProtocol, type Protocol } from "../../engine/core/protocol";
 import type { PotentialSpec } from "../../engine/core/potentials";
 import { initialState } from "../../engine/core/system";
 import type { GpuSystem } from "../../engine/gpu/engine";
@@ -83,12 +83,12 @@ function stageLook(stage: ExplainerStage): StageLook {
 
 const FAST_STEPS = 1500;
 
-function protocolFor(variant: SimVariant): Protocol {
-  return variant === "explainer" ? growProtocol() : liveProtocol({ Tstar: LIVE.Tstar, gamma: LIVE.gamma });
+function protocolFor(_variant: SimVariant): Protocol {
+  return liveProtocol({ Tstar: LIVE.Tstar, gamma: LIVE.gamma });
 }
 
 function densityFor(variant: SimVariant): number {
-  return variant === "explainer" ? 0.35 : LIVE.density;
+  return variant === "explainer" ? 0.2 : LIVE.density;
 }
 
 export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: CanvasSize | null, opts: SimDriverOptions, mode: SimMode) {
@@ -205,7 +205,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     const B = symB ?? v.B;
     const cssW = v.canvas.clientWidth || 1;
     const cssH = v.canvas.clientHeight || 1;
-    let target = cssW < 640 ? cfg.compactScale : cfg.scale;
+    let target = (cssW < 640 ? cfg.compactScale : cfg.scale) * (o.maximized ? 1.6 : 1);
     if (o.stage) {
       const xs = [0, B[0], B[1], B[0] + B[1]];
       const ys = [0, B[2], B[3], B[2] + B[3]];
@@ -226,12 +226,27 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     v.opts.cssPxPerSigma = next.scale;
     v.opts.center = [next.cx, next.cy];
 
-    // explainer "lattice" step: breathe the pressure so the box visibly works
-    if (o.stage === "lattice" && !fastRef.current && sys === symRef.current) {
-      const phi = sys.data.nCell / Math.max(1, sys.data.n);
-      if (sys.runner) sys.setProtocol(null);
-      const t = performance.now() / 1000;
-      sys.setParams({ T: 0.08 * phi, P: 1.2 + 0.9 * Math.sin(1.3 * t), gamma: 1, nptEvery: 1, potential: LJ, forceCap: Infinity });
+    // once settled, hold the live temperature and apply the barostat: the
+    // page's pressure for hero/tiles; a slow breath for the explainer's
+    // lattice step; otherwise fixed volume
+    if (sys === symRef.current) {
+      const r = sys.runner;
+      if (r && r.stage === r.protocol.stages.length - 1) sys.setProtocol(null);
+      if (!sys.runner) {
+        const phi = sys.data.nCell / Math.max(1, sys.data.n);
+        const breathing = o.stage === "lattice";
+        const t = performance.now() / 1000;
+        const P = o.variant === "explainer" ? (breathing ? 0.03 * Math.exp(0.9 * Math.sin(0.8 * t)) : null) : (o.pressure ?? null);
+        sys.setParams({
+          T: LIVE.Tstar * phi,
+          gamma: LIVE.gamma,
+          P,
+          nptEvery: breathing ? 2 : 8,
+          mcMaxDelta: 0.01,
+          potential: LJ,
+          forceCap: 2000,
+        });
+      }
     }
   }
 
@@ -241,12 +256,6 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     if (!hv || !stage) return;
     hv.view.setOptions(stageLook(stage).view);
     // (re-applied when the system is (re)created: see deps)
-    const sys = symRef.current;
-    if (sys && stage !== "lattice" && !sys.runner) {
-      // leaving the breathing step: settle back at a steady low pressure
-      const phi = sys.data.nCell / Math.max(1, sys.data.n);
-      sys.setParams({ T: 0.06 * phi, P: 1, nptEvery: 4 });
-    }
   }, [stage, generation]);
 
   // ---- release / restore the symmetry (explainer) ----

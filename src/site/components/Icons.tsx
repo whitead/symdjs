@@ -131,3 +131,15 @@ export const ExternalIcon = (p: IconProps) => (
     <path d="M9.5 2.5h4v4M13.5 2.5 7.5 8.5M11.5 9.5v3a1 1 0 0 1-1 1h-7a1 1 0 0 1-1-1v-7a1 1 0 0 1 1-1h3" />
   </Icon>
 );
+
+export const MaximizeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M2.75 6V2.75H6M10 2.75h3.25V6M13.25 10v3.25H10M6 13.25H2.75V10" />
+  </Icon>
+);
+
+export const MinimizeIcon = (p: IconProps) => (
+  <Icon {...p}>
+    <path d="M6 2.75V6H2.75M13.25 6H10V2.75M10 13.25V10h3.25M2.75 10H6v3.25" />
+  </Icon>
+);
