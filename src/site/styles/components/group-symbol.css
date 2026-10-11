@@ -1,0 +1,56 @@
+/* Hermann–Mauguin: italic letters (lattice letter, m, g), upright digits */
+.hm {
+  white-space: nowrap;
+  font-feature-settings: "lnum" 1;
+}
+
+.hm__letter {
+  font-style: italic;
+  font-variation-settings: "opsz" 144, "SOFT" 60, "WONK" 1;
+}
+
+.hm__letter:first-child {
+  margin-right: 0.04em;
+}
+
+.hm__num {
+  font-style: normal;
+  font-variant-numeric: lining-nums;
+}
+
+/* Orbifold (Conway): ∗ mirror boundaries, × crosscaps, o torus */
+.orbifold {
+  white-space: nowrap;
+  font-variant-numeric: lining-nums;
+}
+
+.orbifold__star {
+  display: inline-block;
+  position: relative;
+  width: 0.62em;
+  height: 0.62em;
+  margin-right: 0.06em;
+  vertical-align: 0.02em;
+}
+
+.orbifold__star svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.orbifold__star path {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.25;
+  stroke-linecap: round;
+}
+
+.orbifold__cross {
+  font-family: var(--font-math);
+  font-style: normal;
+}
+
+.orbifold__o {
+  font-style: italic;
+}

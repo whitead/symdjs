@@ -1,0 +1,135 @@
+.wyckoff {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.wyckoff__chips {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(6.9rem, 1fr));
+  gap: 0.4rem;
+}
+
+.wyckoff__chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.25rem;
+  height: 2.1rem;
+  padding: 0 0.2rem 0 0.5rem;
+  border: 1px dashed var(--rule-mid);
+  border-radius: var(--radius-m);
+  background: transparent;
+  color: var(--ink-3);
+  transition:
+    background var(--dur) var(--ease-out),
+    border-color var(--dur) var(--ease-out),
+    color var(--dur) var(--ease-out);
+}
+
+.wyckoff__chip[data-active] {
+  border-style: solid;
+  border-color: var(--rule-strong);
+  background: var(--paper-raised);
+  color: var(--ink);
+  box-shadow: 0 1px 0 rgb(255 255 255 / 0.8) inset, 0 1px 2px rgb(31 36 48 / 0.06);
+}
+
+.wyckoff__chip[data-active][data-kind="point"] {
+  background: linear-gradient(0deg, rgb(249 65 68 / 0.07), rgb(249 65 68 / 0.07)), var(--paper-raised);
+}
+
+.wyckoff__chip[data-active][data-kind="line"] {
+  background: linear-gradient(0deg, rgb(87 117 144 / 0.09), rgb(87 117 144 / 0.09)), var(--paper-raised);
+}
+
+.wyckoff__site {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.05rem;
+  font-family: var(--font-text);
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.wyckoff__glyph {
+  width: 0.8rem;
+  height: 0.8rem;
+  margin-right: 0.35rem;
+  align-self: center;
+  color: var(--ink-4);
+}
+
+.wyckoff__chip[data-active] .wyckoff__glyph {
+  color: var(--ink-2);
+}
+
+.wyckoff__chip[data-active][data-kind="point"] .wyckoff__glyph {
+  color: var(--c-vermilion);
+}
+
+.wyckoff__chip[data-active][data-kind="line"] .wyckoff__glyph {
+  color: var(--c-slate);
+}
+
+.wyckoff__mult {
+  font-variant-numeric: lining-nums;
+  font-variation-settings: "opsz" 24;
+}
+
+.wyckoff__letter {
+  font-style: italic;
+  font-variation-settings: "opsz" 24, "SOFT" 60, "WONK" 1;
+}
+
+.wyckoff__stepper {
+  display: inline-flex;
+  align-items: center;
+}
+
+.wyckoff__stepper button {
+  display: grid;
+  place-items: center;
+  width: 1.45rem;
+  height: 1.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-s);
+  background: transparent;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--dur-fast), color var(--dur-fast);
+}
+
+.wyckoff__stepper button:hover:not(:disabled) {
+  background: rgb(31 36 48 / 0.08);
+  color: var(--ink);
+}
+
+.wyckoff__stepper button:disabled {
+  color: var(--ink-4);
+  opacity: 0.5;
+  cursor: default;
+}
+
+.wyckoff__count {
+  min-width: 1.1rem;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.wyckoff__summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5em;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.wyckoff__summary b {
+  font-weight: 500;
+  color: var(--ink);
+}

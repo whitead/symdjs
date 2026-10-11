@@ -1,0 +1,356 @@
+/* ---- Frontispiece ------------------------------------------------------ */
+
+.hero {
+  --frame: clamp(8px, 1.2vw, 16px);
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  min-height: 100vh;
+  min-height: 100svh;
+  padding: calc(var(--frame) + 0.75rem) calc(var(--frame) + var(--gutter)) calc(var(--frame) + 1.1rem);
+  overflow: hidden;
+}
+
+/* paper veil: keeps the title legible and fades the crystal into the page */
+.hero__veil {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(0deg, var(--paper) 0%, rgb(245 244 233 / 0) 16%),
+    linear-gradient(180deg, rgb(245 244 233 / 0.9) 0%, rgb(245 244 233 / 0) 13%),
+    linear-gradient(
+      90deg,
+      var(--paper) 0%,
+      rgb(245 244 233 / 0.97) 24%,
+      rgb(245 244 233 / 0.82) 40%,
+      rgb(245 244 233 / 0.3) 58%,
+      rgb(245 244 233 / 0) 72%
+    );
+}
+
+/* engraved double plate mark */
+.hero__frame {
+  position: absolute;
+  inset: var(--frame);
+  z-index: 1;
+  border: 1px solid var(--rule-strong);
+  pointer-events: none;
+}
+
+.hero__frame::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  border: 1px solid var(--rule);
+}
+
+/* ---- masthead ---- */
+
+.masthead {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-m);
+  pointer-events: none;
+}
+
+.masthead a {
+  pointer-events: auto;
+}
+
+.masthead__mark {
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 500;
+  font-variation-settings: "opsz" 48, "SOFT" 50, "WONK" 1;
+  font-style: italic;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.masthead__mark span {
+  font-style: normal;
+  color: var(--mark);
+}
+
+.masthead__links {
+  display: flex;
+  gap: clamp(0.9rem, 2vw, 1.8rem);
+  padding: 0.3rem 1.1rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: rgb(251 250 242 / 0.88);
+  box-shadow: 0 6px 18px -12px rgb(62 52 20 / 0.4);
+  backdrop-filter: blur(4px);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+}
+
+.masthead__links a {
+  color: var(--ink-2);
+  text-decoration: none;
+  padding-block: 0.3rem;
+  background: linear-gradient(var(--ink), var(--ink)) 0 100% / 0 1px no-repeat;
+  transition: background-size var(--dur) var(--ease-out), color var(--dur);
+}
+
+.masthead__links a:hover {
+  color: var(--ink);
+  background-size: 100% 1px;
+}
+
+/* ---- title block ---- */
+
+.hero__copy {
+  position: relative;
+  z-index: 2;
+  align-self: center;
+  max-width: 44rem;
+  padding-block: var(--space-m);
+  pointer-events: none;
+}
+
+.hero__copy a {
+  pointer-events: auto;
+}
+
+.hero__kicker {
+  display: flex;
+  gap: 0.6em;
+  margin-bottom: var(--space-l);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--mark-ink);
+}
+
+.hero__title {
+  display: grid;
+  gap: 0.35em;
+  font-weight: 330;
+  line-height: var(--leading-display);
+}
+
+.hero__pre {
+  display: flex;
+  align-items: center;
+  gap: 0.8em;
+  font-family: var(--font-display);
+  font-size: var(--step-1);
+  font-weight: 450;
+  font-variation-settings: "opsz" 36, "SOFT" 0, "WONK" 0;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.hero__pre::after {
+  content: "";
+  flex: 0 0 4rem;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.hero__main {
+  display: block;
+  max-width: 10.5ch;
+  font-size: min(var(--step-6), 12.5vh);
+  letter-spacing: -0.035em;
+  font-variation-settings: "opsz" 144, "SOFT" 20, "WONK" 0;
+}
+
+.hero__main em {
+  font-weight: 300;
+  font-variation-settings: "opsz" 144, "SOFT" 100, "WONK" 1;
+  letter-spacing: -0.02em;
+}
+
+.hero__subtitle {
+  max-width: 33ch;
+  margin-top: var(--space-l);
+  font-size: var(--step-2);
+  line-height: 1.3;
+  font-weight: 360;
+  font-variation-settings: "opsz" 36, "SOFT" 30, "WONK" 0;
+  color: var(--ink-2);
+}
+
+.hero__credit {
+  max-width: 46ch;
+  margin-top: var(--space-m);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink-3);
+}
+
+.hero__credit cite {
+  font-style: italic;
+}
+
+.hero__credit b {
+  font-weight: 600;
+}
+
+/* ---- foot: scroll cue, hint, frontispiece caption ---- */
+
+.hero__foot {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-m);
+  padding-left: 2.6rem; /* clears the hero pause button */
+  pointer-events: none;
+}
+
+.hero__foot a {
+  pointer-events: auto;
+}
+
+.scroll-cue {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.scroll-cue__line {
+  position: relative;
+  width: 2.75rem;
+  height: 1px;
+  overflow: hidden;
+  background: var(--rule-mid);
+}
+
+.scroll-cue__line::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink);
+  transform: translateX(-100%);
+  animation: cue 2.6s var(--ease-in-out) infinite;
+}
+
+.scroll-cue svg {
+  animation: bob 2.6s var(--ease-in-out) infinite;
+}
+
+@keyframes cue {
+  0% {
+    transform: translateX(-100%);
+  }
+  55%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-cue__line::after,
+  .scroll-cue svg {
+    animation: none;
+  }
+
+  .scroll-cue__line::after {
+    transform: none;
+  }
+}
+
+.hero__legend {
+  display: grid;
+  justify-items: end;
+  gap: 0.35rem;
+  text-align: right;
+}
+
+.hero__legend .plate-caption {
+  justify-content: flex-end;
+  padding: 0.3rem 0.6rem;
+  border-radius: var(--radius-s);
+  background: rgb(245 244 233 / 0.82);
+  backdrop-filter: blur(2px);
+}
+
+.hero__hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: rgb(251 250 242 / 0.88);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-style: italic;
+  color: var(--ink-2);
+  backdrop-filter: blur(2px);
+}
+
+/* ---- small screens: text over a bottom-weighted veil ---- */
+
+@media (max-width: 52rem) {
+  .hero__veil {
+    background:
+      linear-gradient(180deg, rgb(245 244 233 / 0.92) 0, rgb(245 244 233 / 0) 4.5rem),
+      linear-gradient(0deg, var(--paper) 0%, rgb(245 244 233 / 0.96) 45%, rgb(245 244 233 / 0.55) 68%, rgb(245 244 233 / 0.1) 100%);
+  }
+
+  .hero__copy {
+    align-self: end;
+    padding-block: var(--space-l) var(--space-m);
+  }
+
+  .masthead__links {
+    display: none;
+  }
+
+  .hero__foot {
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    padding-left: 0;
+  }
+
+  .hero__legend {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .hero__legend .plate-caption {
+    justify-content: flex-start;
+    padding: 0;
+    background: none;
+  }
+
+  .scroll-cue {
+    align-self: stretch;
+    justify-content: flex-start;
+    padding-top: var(--space-xs);
+    padding-left: 2.6rem; /* clears the pause button */
+    border-top: 1px solid var(--rule);
+  }
+}

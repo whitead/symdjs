@@ -1,0 +1,122 @@
+.footer {
+  margin-top: var(--space-section);
+  padding-bottom: var(--space-2xl);
+}
+
+.footer__inner {
+  width: min(var(--content), 100% - 2 * var(--gutter));
+  margin-inline: auto;
+}
+
+.footer__ornament {
+  display: flex;
+  align-items: center;
+  gap: var(--space-m);
+  margin-bottom: var(--space-2xl);
+}
+
+.footer__ornament span {
+  flex: 1;
+  height: 1px;
+  background: var(--rule-strong);
+}
+
+.footer__ornament svg circle {
+  fill: var(--paper);
+  stroke: var(--ink);
+  stroke-width: 0.9;
+}
+
+.footer__ornament svg circle:last-child {
+  fill: var(--c-vermilion);
+}
+
+.footer__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.8fr);
+  gap: var(--space-xl);
+}
+
+.footer__heading {
+  margin-bottom: var(--space-s);
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.footer__ref {
+  max-width: 34rem;
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink-2);
+}
+
+.footer__bib {
+  position: relative;
+  margin-top: var(--space-s);
+}
+
+.footer__bib pre {
+  margin: 0;
+  padding: var(--space-s) var(--space-m);
+  overflow-x: auto;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-m);
+  background: var(--paper-sunk);
+  box-shadow: var(--shadow-press);
+  font-size: 0.74rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.footer__copy {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+}
+
+.footer__list {
+  display: grid;
+  gap: 0.5rem;
+  font-size: var(--step--1);
+  line-height: 1.5;
+  color: var(--ink-2);
+}
+
+.footer__links a {
+  text-decoration-color: var(--rule-mid);
+}
+
+.footer__colophon {
+  margin-top: var(--space-2xl);
+  padding-top: var(--space-s);
+  border-top: 1px solid var(--rule);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+}
+
+@media (max-width: 56rem) {
+  .footer__grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .footer__cite {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 34rem) {
+  .footer__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .footer__copy {
+    position: static;
+    margin-top: 0.5rem;
+  }
+}
