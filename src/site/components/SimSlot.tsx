@@ -14,7 +14,8 @@ import { useReducedMotion } from "../hooks/useReducedMotion";
 import { defaultOccupancy, planeGroup, type Occupancy } from "../lib/groups";
 import { usePlaceholderSim, type SimMode } from "../sim/placeholder/usePlaceholderSim";
 import { useGpuSim } from "../sim/useGpuSim";
-import { DEFAULT_PARAMS, type ExplainerStage, type SimParams, type SimStats, type SimVariant } from "../sim/types";
+import type { Group } from "../../engine/groups/group";
+import { DEFAULT_PARAMS, type ExplainerStage, type SimApi, type SimDisplay, type SimParams, type SimStats, type SimVariant } from "../sim/types";
 import { PauseIcon, PlayIcon } from "./Icons";
 import "../styles/components/sim-slot.css";
 
@@ -35,6 +36,10 @@ export interface SimSlotProps {
   label?: string;
   /** overlays rendered above the canvas (captions, hints) */
   children?: ReactNode;
+  /** a group object (e.g. a custom group) used instead of `group` */
+  groupObj?: Group;
+  display?: SimDisplay;
+  onApi?: (api: SimApi | null) => void;
 }
 
 const INTERACTIVE: Record<SimVariant, boolean> = { hero: true, card: false, plate: true, explainer: false };
@@ -50,6 +55,9 @@ export function SimSlot({
   onStats,
   label,
   children,
+  groupObj,
+  display,
+  onApi,
 }: SimSlotProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -60,16 +68,18 @@ export function SimSlot({
   // null = follow the default (play unless reduced motion), else the user's choice
   const [userPlaying, setUserPlaying] = useState<boolean | null>(null);
 
-  const occ = useMemo(() => occupancy ?? defaultOccupancy(planeGroup(group)), [occupancy, group]);
+  const occ = useMemo(() => occupancy ?? defaultOccupancy(groupObj ?? planeGroup(group)), [occupancy, group, groupObj]);
 
   const wantsPlay = userPlaying ?? !reducedMotion;
   const mode: SimMode = !supported ? "static" : !wantsPlay ? (userPlaying === false ? "paused" : "static") : inView ? "live" : "paused";
 
   // WebGPU drives the canvas; without WebGPU the Canvas2D toy model draws a
   // static preview instead (each hook ignores the canvas when size is null)
-  const driver = { variant, group, occupancy: occ, seed, params, stage, interactive: INTERACTIVE[variant] && supported, reducedMotion, onStats };
+  const driver = { variant, group, occupancy: occ, seed, params, stage, interactive: INTERACTIVE[variant] && supported, reducedMotion, onStats, groupObj, display, onApi };
   useGpuSim(canvasRef, supported ? size : null, driver, mode);
-  usePlaceholderSim(canvasRef, supported ? null : size, driver, mode);
+  // the toy model only knows the 17 tabulated groups
+  const toyDriver = groupObj?.name === "custom" ? { ...driver, group: "p1", occupancy: { a: 6 } } : driver;
+  usePlaceholderSim(canvasRef, supported ? null : size, toyDriver, mode);
 
   const toggle = useCallback(() => setUserPlaying(!wantsPlay), [wantsPlay]);
 

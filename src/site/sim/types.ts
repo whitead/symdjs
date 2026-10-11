@@ -45,3 +45,33 @@ export const DEFAULT_PARAMS: SimParams = {
   released: false,
   regrow: 0,
 };
+
+/** Display overrides for a view. */
+export interface SimDisplay {
+  colorMode?: "rep" | "op" | "site" | "ink";
+  showAsym?: boolean;
+  showGrid?: boolean;
+  showCell?: boolean;
+  markReps?: boolean;
+  /** CSS pixels per σ */
+  scale?: number;
+}
+
+/** A snapshot of the unit cell for export. */
+export interface CellExport {
+  group: string;
+  lattice: string;
+  /** lattice vectors as columns, row-major 2×2 */
+  B: number[];
+  /** fractional coordinates of every particle in the cell */
+  fractional: number[][];
+  cartesian: number[][];
+  /** rep index and op index that generated each particle */
+  rep: number[];
+  op: number[];
+  released: boolean;
+}
+
+export interface SimApi {
+  exportCell: () => Promise<CellExport>;
+}

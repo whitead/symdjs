@@ -7,7 +7,8 @@
 import { useEffect, useRef, type RefObject } from "react";
 import type { CanvasSize } from "../../hooks/useCanvasSize";
 import { occupancyKey, type Occupancy } from "../../lib/groups";
-import type { ExplainerStage, SimParams, SimStats, SimVariant } from "../types";
+import type { Group } from "../../../engine/groups/group";
+import type { ExplainerStage, SimApi, SimDisplay, SimParams, SimStats, SimVariant } from "../types";
 import { DEFAULT_STYLE, centredOrigin, drawToy, pxToFrac, type HitBuffer, type ToyStyle, type ToyView } from "./drawToy";
 import {
   createToyScene,
@@ -33,6 +34,12 @@ export interface SimDriverOptions {
   interactive: boolean;
   reducedMotion: boolean;
   onStats?: (s: SimStats) => void;
+  /** a group object (e.g. a custom group); overrides `group` for the engine */
+  groupObj?: Group;
+  /** view overrides (colour mode, overlays) and CSS px per σ */
+  display?: SimDisplay;
+  /** receives an API for the live system (null when it goes away) */
+  onApi?: (api: SimApi | null) => void;
 }
 
 interface VariantConfig {

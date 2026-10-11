@@ -10,6 +10,9 @@ import { planeGroup } from "../../engine/groups/library";
 import type { SimView, ViewOptions } from "../../engine/render/renderer";
 import type { HubView, SimHub } from "../../sim/hub";
 import { attachDrag, releaseSymmetry } from "../../sim/interact";
+import { cellPositions } from "../../engine/core/system";
+import { formatOp } from "../../engine/groups/custom";
+import type { Group } from "../../engine/groups/group";
 import type { CanvasSize } from "../hooks/useCanvasSize";
 import { useGpuSupport } from "../hooks/useGpuSupport";
 import { occupancyKey } from "../lib/groups";
@@ -76,6 +79,12 @@ function stageLook(stage: ExplainerStage): StageLook {
 
 const FAST_STEPS = 1500;
 
+function displayView(d: SimDriverOptions["display"]): Partial<ViewOptions> {
+  if (!d) return {};
+  const { scale: _scale, ...rest } = d;
+  return Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined)) as Partial<ViewOptions>;
+}
+
 function phaseOf(sys: GpuSystem, released: boolean): SimPhase {
   if (released) return "released";
   const name = sys.runner?.current.name;
@@ -101,6 +110,8 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
 
   const { variant, group, seed, params, stage } = opts;
   const occKey = occupancyKey(opts.occupancy);
+  const groupKey = opts.groupObj ? `${opts.groupObj.name}:${opts.groupObj.lattice}:${opts.groupObj.ops.map(formatOp).join(";")}` : group;
+  const displayKey = JSON.stringify(opts.display ?? {});
   const released = params.released || stage === "release";
   const hasCanvas = !!size;
 
@@ -115,8 +126,9 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         if (cancelled || !canvas) return;
         hubRef.current = hub;
         const o = optsRef.current;
+        const g: Group = o.groupObj ?? planeGroup(o.group);
         const sys = hub.engine.add({
-          group: planeGroup(o.group),
+          group: g,
           occupancy: o.occupancy,
           density: 0.35,
           seed: o.seed,
@@ -131,6 +143,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         const view: Partial<ViewOptions> = {
           ...cfg.view,
           ...(o.stage ? stageLook(o.stage).view : {}),
+          ...displayView(o.display),
           manageSize: false,
           centerCell: false,
         };
@@ -141,6 +154,30 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         fastRef.current = o.variant === "explainer" || modeRef.current === "static";
         if (fastRef.current) canvas.style.opacity = "0";
         if (o.interactive) cleanupDrag = attachDrag(hub.engine, hv.view);
+        o.onApi?.({
+          exportCell: async () => {
+            const cur = hv.view.sys;
+            const { s, B } = await hub.engine.downloadState(cur);
+            const frac = cellPositions(cur.data, s);
+            const fractional: number[][] = [];
+            const cartesian: number[][] = [];
+            for (let q = 0; q < cur.data.nCell; q++) {
+              const f = [frac[2 * q], frac[2 * q + 1]];
+              fractional.push(f);
+              cartesian.push([B[0] * f[0] + B[1] * f[1], B[2] * f[0] + B[3] * f[1]]);
+            }
+            return {
+              group: cur.group.name,
+              lattice: cur.group.lattice,
+              B: Array.from(B),
+              fractional,
+              cartesian,
+              rep: Array.from(cur.data.imageRep),
+              op: Array.from(cur.data.imageOp),
+              released: cur === relRef.current,
+            };
+          },
+        });
       })
       .catch((e) => markUnsupported(String(e?.message ?? e)));
     return () => {
@@ -156,9 +193,15 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
       relRef.current = null;
       const canvas = canvasRef.current;
       if (canvas) canvas.style.opacity = "";
+      optsRef.current.onApi?.(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supported, hasCanvas, group, occKey, seed, variant, params.regrow]);
+  }, [supported, hasCanvas, groupKey, occKey, seed, variant, params.regrow]);
+
+  // ---- display overrides ----
+  useEffect(() => {
+    hvRef.current?.view.setOptions(displayView(optsRef.current.display));
+  }, [displayKey]);
 
   /** per-frame: fast-forward, camera, explainer breathing */
   function frame(v: SimView, hv: HubView) {
@@ -184,7 +227,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     const B = symB ?? v.B;
     const cssW = v.canvas.clientWidth || 1;
     const cssH = v.canvas.clientHeight || 1;
-    let target = cssW < 640 ? cfg.compactScale : cfg.scale;
+    let target = o.display?.scale ?? (cssW < 640 ? cfg.compactScale : cfg.scale);
     if (o.stage) {
       const xs = [0, B[0], B[1], B[0] + B[1]];
       const ys = [0, B[2], B[3], B[2] + B[3]];

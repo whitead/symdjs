@@ -9,39 +9,34 @@
 
 .lab__stage {
   position: relative;
-  min-height: 24rem;
+  display: grid;
+  grid-template-rows: minmax(24rem, 1fr) auto;
   border-right: 1px solid var(--rule-mid);
-  overflow: hidden;
+  min-width: 0;
 }
 
 .lab__stage .sim-slot {
-  position: absolute;
-  inset: 0;
+  position: relative;
   aspect-ratio: auto;
-  filter: saturate(0.55);
-  opacity: 0.8;
+  min-height: 24rem;
+  height: 100%;
+  border-bottom: 1px solid var(--rule-mid);
 }
 
-/* rubber stamp */
-.lab__stamp {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  padding: 0.55rem 1.2rem 0.45rem;
-  border: 2px solid var(--vermilion-ink);
-  border-radius: 6px;
-  outline: 1px solid var(--vermilion-ink);
-  outline-offset: 3px;
-  background: rgb(251 250 242 / 0.72);
-  font-family: var(--font-mono);
-  font-size: var(--step-1);
-  font-weight: 600;
-  letter-spacing: 0.22em;
-  text-transform: uppercase;
+.lab__readouts {
+  padding: var(--space-s) var(--space-m);
+}
+
+.lab__empty {
+  display: grid;
+  place-items: center;
+  min-height: 24rem;
+  padding: var(--space-l);
+  font-family: var(--font-text);
+  font-style: italic;
   color: var(--vermilion-ink);
-  transform: translate(-50%, -50%) rotate(-8deg);
-  mix-blend-mode: multiply;
-  white-space: nowrap;
+  text-align: center;
+  border-bottom: 1px solid var(--rule-mid);
 }
 
 .lab__panel {
@@ -157,13 +152,154 @@
   }
 
   .lab__stage {
-    min-height: 0;
-    aspect-ratio: 4 / 3;
     border-right: 0;
     border-bottom: 1px solid var(--rule-mid);
   }
 
   .lab__panel {
     padding: var(--space-m);
+  }
+}
+
+/* ---- working controls ---- */
+
+.lab__picker {
+  display: grid;
+  gap: 0.3rem;
+}
+
+.lab__family {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.3rem;
+}
+
+.lab__family-name {
+  width: 6.2rem;
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--ink-4);
+}
+
+.lab__chip {
+  padding: 0.18rem 0.55rem 0.12rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: var(--step-0);
+  line-height: 1.2;
+  color: var(--ink-2);
+  cursor: pointer;
+  transition: background var(--dur-fast, 120ms) ease, border-color var(--dur-fast, 120ms) ease;
+}
+
+.lab__chip:hover {
+  border-color: var(--rule-strong);
+  color: var(--ink);
+}
+
+.lab__chip[aria-pressed="true"] {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: var(--paper);
+}
+
+.lab__chip--custom {
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  font-style: italic;
+}
+
+.lab__chip:focus-visible,
+.lab__preset:focus-visible,
+.lab__gens:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.lab__gens {
+  width: 100%;
+  resize: vertical;
+  padding: 0.55rem 0.7rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-s, 4px);
+  background: var(--paper);
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink);
+}
+
+.lab__presets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.3rem;
+  margin: 0.45rem 0 0.6rem;
+}
+
+.lab__preset {
+  padding: 0.18rem 0.6rem;
+  border: 1px dashed var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  font-family: var(--font-ui);
+  font-size: var(--step--2);
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.lab__preset:hover {
+  border-style: solid;
+  color: var(--ink);
+}
+
+.lab__status {
+  margin-bottom: 0.4rem;
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--vermilion-ink);
+}
+
+.lab__status[data-ok] {
+  color: var(--ink-2);
+}
+
+.lab__sliders {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-s);
+}
+
+.lab__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.lab__export {
+  padding-top: var(--space-s);
+  border-top: 1px solid var(--rule-mid);
+}
+
+@media (max-width: 52rem) {
+  .lab__stage {
+    grid-template-rows: auto auto;
+  }
+
+  .lab__stage .sim-slot {
+    min-height: 0;
+    aspect-ratio: 1;
+  }
+
+  .lab__sliders {
+    grid-template-columns: 1fr;
+  }
+
+  .lab__family-name {
+    width: 100%;
   }
 }
