@@ -59,9 +59,6 @@ export function Hero() {
           <li>
             <a href="#atlas">Atlas</a>
           </li>
-          <li>
-            <a href="#lab">Lab</a>
-          </li>
         </ul>
       </nav>
 

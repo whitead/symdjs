@@ -92,4 +92,10 @@ async function main() {
   out.textContent = "DONE " + JSON.stringify({ results, bench });
 }
 
-main().catch((e) => (out.textContent = "ERROR " + (e?.stack ?? e)));
+const post = () => {
+  if (new URLSearchParams(location.search).has("post"))
+    fetch("http://localhost:5199/log", { method: "POST", body: out.textContent ?? "" }).catch(() => {});
+};
+main()
+  .catch((e) => (out.textContent = "ERROR " + (e?.stack ?? e)))
+  .finally(post);

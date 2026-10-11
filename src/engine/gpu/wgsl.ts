@@ -81,37 +81,30 @@ const FLAG_MC_ADAPT: u32 = 1u;
 @group(0) @binding(4) var<storage, read_write> pos: array<vec2f>;
 @group(0) @binding(5) var<storage, read> activeSlots: array<u32>;
 
+// Workgroup memory is packed into a few variables: Metal (via naga in
+// Firefox) passes each workgroup variable as a separate threadgroup argument
+// and allows at most 31 of them.
+struct OpW { R: mat2x2f, t: vec2f }
+struct SiteW { Pv: mat2x2f, Du: mat2x2f, logJ: f32, logJT: f32 }
+struct Ctl {
+  B: mat2x2f, Binv: mat2x2f, BT: mat2x2f, BinvT: mat2x2f,
+  V: f32, VT: f32, U: f32, UT: f32,
+  hast: f32, delta: f32, rate: f32, pad0: f32,
+  nT: u32, zT: u32, winAtt: u32, winAcc: u32,
+  att: u32, acc: u32, pad1: u32, pad2: u32,
+  p: array<f32, 8>,
+  pT: array<f32, 8>,
+}
 var<workgroup> wS: array<vec2f, NMAX>;
 var<workgroup> wImg: array<vec2f, IMGMAX>;
-var<workgroup> wOpR: array<mat2x2f, OPMAX>;
-var<workgroup> wOpT: array<vec2f, OPMAX>;
-var<workgroup> wPv: array<mat2x2f, SITEMAX>;
-var<workgroup> wDu: array<mat2x2f, SITEMAX>;
-var<workgroup> wLogJ: array<f32, SITEMAX>;
-var<workgroup> wLogJT: array<f32, SITEMAX>;
+var<workgroup> wOps: array<OpW, OPMAX>;
+var<workgroup> wSite: array<SiteW, SITEMAX>;
 var<workgroup> wTrans: array<vec2f, TMAX>;
 var<workgroup> wPart: array<vec2f, WG>;
 var<workgroup> wRed: array<f32, WG>;
-var<workgroup> wP: array<f32, 8>;
-var<workgroup> wPT: array<f32, 8>;
-var<workgroup> wB: mat2x2f;
-var<workgroup> wBinv: mat2x2f;
-var<workgroup> wV: f32;
-var<workgroup> wBT: mat2x2f;
-var<workgroup> wBinvT: mat2x2f;
-var<workgroup> wVT: f32;
-var<workgroup> wNT: u32;
-var<workgroup> wZT: u32;
-var<workgroup> wU: f32;
-var<workgroup> wUT: f32;
+var<workgroup> wc: Ctl;
+// broadcast slots for workgroupUniformLoad
 var<workgroup> wFlag: u32;
-var<workgroup> wHast: f32;
-var<workgroup> wDelta: f32;
-var<workgroup> wRate: f32;
-var<workgroup> wWinAtt: u32;
-var<workgroup> wWinAcc: u32;
-var<workgroup> wAtt: u32;
-var<workgroup> wAcc: u32;
 var<workgroup> wBc0: u32;
 var<workgroup> wBc1: u32;
 var<workgroup> wBc2: u32;
@@ -156,15 +149,15 @@ fn setupTrans(B: mat2x2f, Binv: mat2x2f, rc: f32) -> bool {
     for (var b = 0u; b < w1; b++) {
       let nv = vec2f(f32(a) - m0, f32(b) - m1);
       wTrans[t] = B * nv;
-      if (nv.x == 0.0 && nv.y == 0.0) { wZT = t; }
+      if (nv.x == 0.0 && nv.y == 0.0) { wc.zT = t; }
       t++;
     }
   }
-  wNT = t;
+  wc.nT = t;
   return true;
 }
 
-/** Site matrices for site si at box B. Writes Pv, Du, logJ (or only logJ into wLogJT if trial). */
+/** Site matrices for site si at box B. Writes Pv, Du, logJ (or only the trial logJT). */
 fn siteMats(slot: u32, si: u32, B: mat2x2f, trial: bool) {
   let base = OFF_SITES + si * SITEW;
   let k = tu(slot, base + 6u);
@@ -185,7 +178,7 @@ fn siteMats(slot: u32, si: u32, B: mat2x2f, trial: bool) {
     Pv = mat2x2f(vec2f(1.0, 0.0), vec2f(0.0, 1.0));
     lj = log(abs(determinant(M)));
   }
-  if (trial) { wLogJT[si] = lj; } else { wPv[si] = Pv; wDu[si] = Du; wLogJ[si] = lj; }
+  if (trial) { wSite[si].logJT = lj; } else { wSite[si].Pv = Pv; wSite[si].Du = Du; wSite[si].logJ = lj; }
 }
 
 fn shapeOk(B: mat2x2f) -> bool {
@@ -228,24 +221,24 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
   // ---- set-up: ops, box, translations, site matrices, positions ----
   if (t < S.nOps) {
     let o = OFF_OPS + t * OPW;
-    wOpR[t] = m2(tf(slot, o), tf(slot, o + 1u), tf(slot, o + 2u), tf(slot, o + 3u));
-    wOpT[t] = vec2f(tf(slot, o + 4u), tf(slot, o + 5u));
+    wOps[t].R = m2(tf(slot, o), tf(slot, o + 1u), tf(slot, o + 2u), tf(slot, o + 3u));
+    wOps[t].t = vec2f(tf(slot, o + 4u), tf(slot, o + 5u));
   }
   if (t == 0u) {
-    for (var c = 0u; c < 8u; c++) { wP[c] = box[slot].p[c]; }
-    wB = boxFromP(S.M, S.latR, wP);
-    wBinv = inv2(wB);
-    wV = abs(determinant(wB));
-    if (!setupTrans(wB, wBinv, S.rc)) { box[slot].status = box[slot].status | 2u; wNT = 0u; }
-    wDelta = box[slot].delta;
-    wRate = box[slot].rate;
-    wWinAtt = box[slot].winAtt;
-    wWinAcc = box[slot].winAcc;
-    wAtt = box[slot].attempts;
-    wAcc = box[slot].accepts;
+    for (var c = 0u; c < 8u; c++) { wc.p[c] = box[slot].p[c]; }
+    wc.B = boxFromP(S.M, S.latR, wc.p);
+    wc.Binv = inv2(wc.B);
+    wc.V = abs(determinant(wc.B));
+    if (!setupTrans(wc.B, wc.Binv, S.rc)) { box[slot].status = box[slot].status | 2u; wc.nT = 0u; }
+    wc.delta = box[slot].delta;
+    wc.rate = box[slot].rate;
+    wc.winAtt = box[slot].winAtt;
+    wc.winAcc = box[slot].winAcc;
+    wc.att = box[slot].attempts;
+    wc.acc = box[slot].accepts;
   }
   workgroupBarrier();
-  if (t < S.nSites) { siteMats(slot, t, wB, false); }
+  if (t < S.nSites) { siteMats(slot, t, wc.B, false); }
   workgroupBarrier();
   for (var i = t; i < n; i += WG) {
     let si = tu(slot, OFF_SITEOF + i) & 255u;
@@ -275,15 +268,15 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
       let Lm = m2(tf(slot, sb + 2u), tf(slot, sb + 3u), tf(slot, sb + 4u), tf(slot, sb + 5u));
       let tt = vec2f(tf(slot, sb), tf(slot, sb + 1u));
       var r = reps[repBase + i];
-      r.v = wPv[si] * (r.v + h * r.f);
-      r.u = r.u + h * (wDu[si] * r.v);
+      r.v = wSite[si].Pv * (r.v + h * r.f);
+      r.u = r.u + h * (wSite[si].Du * r.v);
       if (periodic) { r.u = r.u - floor(r.u); }
       if (S.gamma > 0.0) {
         let sd = c2 * sqrt(S.T / mult);
         let xi = vec2f(gauss(S.seed, gstep, i, 0u), gauss(S.seed, gstep, i, 1u));
-        r.v = wPv[si] * (c1 * r.v + sd * xi);
+        r.v = wSite[si].Pv * (c1 * r.v + sd * xi);
       }
-      r.u = r.u + h * (wDu[si] * r.v);
+      r.u = r.u + h * (wSite[si].Du * r.v);
       if (periodic) { r.u = r.u - floor(r.u); }
       reps[repBase + i] = r;
       wS[i] = fract(tt + Lm * r.u);
@@ -302,70 +295,70 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
         let r = S.latR;
         let k = min(r - 1u, u32(uniform4(S.seed ^ MC_STREAM, after, 0u, 0u) * f32(r)));
         var s1 = 0.0;
-        for (var c = 0u; c < r; c++) { s1 = max(s1, abs(wP[c])); wPT[c] = wP[c]; }
-        wPT[k] = wP[k] + wDelta * s1 * (2.0 * uniform4(S.seed ^ MC_STREAM, after, 0u, 1u) - 1.0);
+        for (var c = 0u; c < r; c++) { s1 = max(s1, abs(wc.p[c])); wc.pT[c] = wc.p[c]; }
+        wc.pT[k] = wc.p[k] + wc.delta * s1 * (2.0 * uniform4(S.seed ^ MC_STREAM, after, 0u, 1u) - 1.0);
         var s2 = 0.0;
-        for (var c = 0u; c < r; c++) { s2 = max(s2, abs(wPT[c])); }
-        wHast = log(s1 / s2);
-        wAtt += 1u;
-        wWinAtt += 1u;
-        var ok = abs(wPT[k] - wP[k]) <= wDelta * s2;
+        for (var c = 0u; c < r; c++) { s2 = max(s2, abs(wc.pT[c])); }
+        wc.hast = log(s1 / s2);
+        wc.att += 1u;
+        wc.winAtt += 1u;
+        var ok = abs(wc.pT[k] - wc.p[k]) <= wc.delta * s2;
         if (ok) {
-          wBT = boxFromP(S.M, S.latR, wPT);
-          ok = determinant(wBT) > 0.0;
+          wc.BT = boxFromP(S.M, S.latR, wc.pT);
+          ok = determinant(wc.BT) > 0.0;
         }
         if (ok) {
-          wBinvT = inv2(wBT);
-          wVT = determinant(wBT);
-          ok = shapeOk(wBT) && setupTrans(wBT, wBinvT, S.rc);
+          wc.BinvT = inv2(wc.BT);
+          wc.VT = determinant(wc.BT);
+          ok = shapeOk(wc.BT) && setupTrans(wc.BT, wc.BinvT, S.rc);
         }
         wFlag = select(0u, 1u, ok);
       }
       let trialOk = workgroupUniformLoad(&wFlag);
       var accepted = 0u;
       if (trialOk == 1u) {
-        if (t < S.nSites) { siteMats(slot, t, wBT, true); }
+        if (t < S.nSites) { siteMats(slot, t, wc.BT, true); }
         computeForces(slot, pot, n, nCell, t, true);
         workgroupBarrier();
         if (t == 0u) {
           var dlogJ = 0.0;
           for (var i = 0u; i < n; i++) {
             let si = tu(slot, OFF_SITEOF + i) & 255u;
-            dlogJ += wLogJT[si] - wLogJ[si];
+            dlogJ += wSite[si].logJT - wSite[si].logJ;
           }
-          let dH = wUT - wU + S.P * (wVT - wV) - S.T * dlogJ - S.T * wHast;
+          let dH = wc.UT - wc.U + S.P * (wc.VT - wc.V) - S.T * dlogJ - S.T * wc.hast;
           var acc = dH <= 0.0;
           if (!acc) { acc = uniform4(S.seed ^ MC_STREAM, after, 0u, 2u) < exp(-dH / S.T); }
           wFlag = select(0u, 1u, acc);
           if (acc) {
-            for (var c = 0u; c < 8u; c++) { wP[c] = wPT[c]; }
-            wB = wBT; wBinv = wBinvT; wV = wVT; wU = wUT;
-            wAcc += 1u;
-            wWinAcc += 1u;
+            for (var c = 0u; c < 8u; c++) { wc.p[c] = wc.pT[c]; }
+            wc.B = wc.BT; wc.Binv = wc.BinvT; wc.V = wc.VT; wc.U = wc.UT;
+            wc.acc += 1u;
+            wc.winAcc += 1u;
           }
         }
         accepted = workgroupUniformLoad(&wFlag);
       }
       if (t == 0u) {
         // translations for the (possibly new) current box
-        setupTrans(wB, wBinv, S.rc);
-        if ((S.flags & FLAG_MC_ADAPT) != 0u && wWinAtt >= 32u) {
-          let rate = f32(wWinAcc) / f32(wWinAtt);
-          wRate = rate;
-          if (rate > 0.5) { wDelta = min(0.05, wDelta * 1.2); }
-          else if (rate < 0.2) { wDelta = max(1e-4, wDelta * 0.8); }
-          wWinAtt = 0u;
-          wWinAcc = 0u;
+        setupTrans(wc.B, wc.Binv, S.rc);
+        if ((S.flags & FLAG_MC_ADAPT) != 0u && wc.winAtt >= 32u) {
+          let rate = f32(wc.winAcc) / f32(wc.winAtt);
+          wc.rate = rate;
+          if (rate > 0.5) { wc.delta = min(0.05, wc.delta * 1.2); }
+          else if (rate < 0.2) { wc.delta = max(1e-4, wc.delta * 0.8); }
+          wc.winAtt = 0u;
+          wc.winAcc = 0u;
         }
       }
       if (accepted == 1u) {
-        if (t < S.nSites) { siteMats(slot, t, wB, false); }
+        if (t < S.nSites) { siteMats(slot, t, wc.B, false); }
         workgroupBarrier();
         for (var i = t; i < n; i += WG) {
           let si = tu(slot, OFF_SITEOF + i) & 255u;
           var r = reps[repBase + i];
           r.f = r.fT;
-          r.v = wPv[si] * r.v;
+          r.v = wSite[si].Pv * r.v;
           reps[repBase + i] = r;
         }
       }
@@ -377,7 +370,7 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
     for (var i = t; i < n; i += WG) {
       let si = tu(slot, OFF_SITEOF + i) & 255u;
       var r = reps[repBase + i];
-      r.v = wPv[si] * (r.v + h * r.f);
+      r.v = wSite[si].Pv * (r.v + h * r.f);
       reps[repBase + i] = r;
     }
     storageBarrier();
@@ -398,19 +391,19 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
   if (t == 0u) {
     var k = 0.0;
     for (var l = 0u; l < WG; l++) { k += wRed[l]; }
-    for (var c = 0u; c < 8u; c++) { box[slot].p[c] = wP[c]; }
-    box[slot].B[0] = wB[0][0]; box[slot].B[1] = wB[1][0];
-    box[slot].B[2] = wB[0][1]; box[slot].B[3] = wB[1][1];
-    box[slot].V = wV;
-    box[slot].U = wU;
+    for (var c = 0u; c < 8u; c++) { box[slot].p[c] = wc.p[c]; }
+    box[slot].B[0] = wc.B[0][0]; box[slot].B[1] = wc.B[1][0];
+    box[slot].B[2] = wc.B[0][1]; box[slot].B[3] = wc.B[1][1];
+    box[slot].V = wc.V;
+    box[slot].U = wc.U;
     box[slot].KE = k;
-    box[slot].delta = wDelta;
-    box[slot].rate = wRate;
-    box[slot].winAtt = wWinAtt;
-    box[slot].winAcc = wWinAcc;
-    box[slot].attempts = wAtt;
-    box[slot].accepts = wAcc;
-    box[slot].nTrans = wNT;
+    box[slot].delta = wc.delta;
+    box[slot].rate = wc.rate;
+    box[slot].winAtt = wc.winAtt;
+    box[slot].winAcc = wc.winAcc;
+    box[slot].attempts = wc.att;
+    box[slot].accepts = wc.acc;
+    box[slot].nTrans = wc.nT;
     if (k != k || abs(k) > 1e30) { box[slot].status = box[slot].status | 1u; }
   }
 }
@@ -421,7 +414,7 @@ fn computeImages(slot: u32, nCell: u32, t: u32) {
     let w = tu(slot, OFF_IMG + q);
     let j = w & 0xffffu;
     let g = w >> 16u;
-    wImg[q] = fract(wOpR[g] * wS[j] + wOpT[g]);
+    wImg[q] = fract(wOps[g].R * wS[j] + wOps[g].t);
   }
 }
 
@@ -436,10 +429,10 @@ fn computeForces(slot: u32, P: Pot, n: u32, nCell: u32, t: u32, trial: bool) {
   let passes = (n + perPass - 1u) / perPass;
   let local = t / lanes;
   let lane = t % lanes;
-  var B = wB;
-  if (trial) { B = wBT; }
-  let nT = wNT;
-  let zT = wZT;
+  var B = wc.B;
+  if (trial) { B = wc.BT; }
+  let nT = wc.nT;
+  let zT = wc.zT;
   var uAcc = 0.0;
   for (var ps = 0u; ps < passes; ps++) {
     let i = ps * perPass + local;
@@ -495,7 +488,7 @@ fn computeForces(slot: u32, P: Pot, n: u32, nCell: u32, t: u32, trial: bool) {
   if (t == 0u) {
     var U = 0.0;
     for (var l = 0u; l < WG; l++) { U += wRed[l]; }
-    if (trial) { wUT = U; } else { wU = U; }
+    if (trial) { wc.UT = U; } else { wc.U = U; }
   }
   storageBarrier();
 }

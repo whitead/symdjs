@@ -5,14 +5,13 @@ import { useCallback, useMemo, useState } from "react";
 import type { Group } from "../../engine/groups/group";
 import { GROUP_NOTES, cellCount, defaultOccupancy, occupancyLabel, type Occupancy } from "../lib/groups";
 import { plateDefaults } from "../content/defaults";
-import { DEFAULT_PARAMS, type Potential, type SimParams, type SimStats } from "../sim/types";
+import { DEFAULT_PARAMS, type SimParams, type SimStats } from "../sim/types";
 import { Button } from "./Button";
 import { DiagramSlot } from "./DiagramSlot";
 import { HM, Orbifold } from "./GroupSymbol";
 import { FlameIcon, LockIcon, RegrowIcon, SnowIcon, UnlockIcon } from "./Icons";
 import { PlateCaption } from "./PlateCaption";
 import { Readout, ReadoutRow } from "./Readout";
-import { SegmentedControl } from "./SegmentedControl";
 import { SimSlot } from "./SimSlot";
 import { Slider } from "./Slider";
 import { WyckoffEditor } from "./WyckoffEditor";
@@ -35,11 +34,6 @@ const PHASE_TEXT: Record<SimStats["phase"], string> = {
 
 type History = Record<"density" | "energy" | "temperature" | "pressure", number[]>;
 
-const POTENTIALS: { value: Potential; label: string; title: string }[] = [
-  { value: "lj", label: "LJ", title: "Lennard-Jones, truncated and shifted" },
-  { value: "wca", label: "WCA", title: "Weeks–Chandler–Andersen: purely repulsive" },
-  { value: "soft", label: "soft", title: "Soft cosine, for removing overlaps" },
-];
 
 export function Plate({ group, flip }: PlateProps) {
   const [occupancy, setOccupancy] = useState<Occupancy>(() => ({ ...(plateDefaults[group.name] ?? defaultOccupancy(group)) }));
@@ -182,13 +176,6 @@ export function Plate({ group, flip }: PlateProps) {
                 onChange={(v) => set("pressure", v)}
               />
             </div>
-
-            <SegmentedControl
-              label="Potential"
-              options={POTENTIALS}
-              value={params.potential}
-              onChange={(v) => set("potential", v)}
-            />
 
             <div className="plate__actions">
               <Button variant="primary" icon={<RegrowIcon />} onClick={regrow}>

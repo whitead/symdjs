@@ -106,18 +106,3 @@
   transform: none;
 }
 
-.sim-slot__static {
-  position: absolute;
-  left: 0.5rem;
-  bottom: 0.5rem;
-  z-index: 2;
-  padding: 0.15rem 0.45rem;
-  border: 1px solid var(--rule-mid);
-  border-radius: var(--radius-pill);
-  background: rgb(251 250 242 / 0.9);
-  font-family: var(--font-mono);
-  font-size: 0.625rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--ink-3);
-}

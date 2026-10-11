@@ -1,10 +1,8 @@
-// The contract between the page and a simulation view. SimSlot takes these
-// props today (driving the Canvas2D placeholder); the WebGPU view should
-// accept the same shape so the swap is internal to SimSlot.
+// The contract between the page and a simulation view (SimSlot → useGpuSim).
+
+import type { Occupancy } from "../lib/groups";
 
 export type SimVariant = "hero" | "card" | "plate" | "explainer";
-
-export type Potential = "lj" | "wca" | "soft";
 
 /** Growth protocol phase, shown in status lines. */
 export type SimPhase = "compressing" | "annealing" | "crystal" | "released";
@@ -13,11 +11,10 @@ export type SimPhase = "compressing" | "annealing" | "crystal" | "released";
 export type ExplainerStage = "asym" | "ghosts" | "tiling" | "lattice" | "wyckoff" | "release";
 
 export interface SimParams {
-  /** reduced temperature T* */
+  /** per-orbit temperature T* = T / φ */
   temperature: number;
-  /** reduced pressure P* */
+  /** pressure P */
   pressure: number;
-  potential: Potential;
   /** symmetry released: every ghost becomes a free particle */
   released: boolean;
   /** bump to restart the growth protocol from a gas */
@@ -41,37 +38,21 @@ export interface SimStats {
 export const DEFAULT_PARAMS: SimParams = {
   temperature: 0.2,
   pressure: 2,
-  potential: "lj",
   released: false,
   regrow: 0,
 };
 
-/** Display overrides for a view. */
-export interface SimDisplay {
-  colorMode?: "rep" | "op" | "site" | "ink";
-  showAsym?: boolean;
-  showGrid?: boolean;
-  showCell?: boolean;
-  markReps?: boolean;
-  /** CSS pixels per σ */
-  scale?: number;
-}
+/** live: animate; paused: hold the current frame; static: grow the crystal, then hold (reduced motion) */
+export type SimMode = "live" | "paused" | "static";
 
-/** A snapshot of the unit cell for export. */
-export interface CellExport {
+export interface SimDriverOptions {
+  variant: SimVariant;
   group: string;
-  lattice: string;
-  /** lattice vectors as columns, row-major 2×2 */
-  B: number[];
-  /** fractional coordinates of every particle in the cell */
-  fractional: number[][];
-  cartesian: number[][];
-  /** rep index and op index that generated each particle */
-  rep: number[];
-  op: number[];
-  released: boolean;
-}
-
-export interface SimApi {
-  exportCell: () => Promise<CellExport>;
+  occupancy: Occupancy;
+  seed: number;
+  params: SimParams;
+  stage?: ExplainerStage;
+  interactive: boolean;
+  reducedMotion: boolean;
+  onStats?: (s: SimStats) => void;
 }

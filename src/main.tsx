@@ -7,3 +7,7 @@ createRoot(document.getElementById("root")!).render(
     <App />
   </StrictMode>,
 );
+
+if (import.meta.env.DEV && new URLSearchParams(location.search).has("selftest")) {
+  import("./dev/selftest").then((m) => m.runSelftest());
+}

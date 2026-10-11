@@ -21,10 +21,18 @@ npm run build      # static site in dist/
 ```
 
 You need a browser with WebGPU: recent Chrome or Edge, Safari 26+, or
-Firefox on Windows or macOS.
+Firefox on Windows or macOS. Without WebGPU, the site shows only a notice.
 
-Dev pages: `/render.html` (8 random crystals), `/diagrams.html` (symmetry
-diagrams for all 17 groups), `/parity.html` (GPU/CPU comparison).
+Dev pages:
+* `/render.html`: 8 random crystals.
+* `/diagrams.html`: symmetry diagrams for all 17 groups.
+* `/parity.html`: GPU/CPU comparison.
+* `/ffdiag.html`: per-shader WebGPU diagnostics.
+
+Firefox can't be driven by Playwright, so run
+`scripts/firefox-check.sh "http://localhost:5173/?selftest"` instead. It
+opens a throwaway Firefox profile and prints which canvases drew
+particles.
 
 ## How it works
 
@@ -34,7 +42,7 @@ diagrams for all 17 groups), `/parity.html` (GPU/CPU comparison).
 | CPU reference engine (Float64) | `src/engine/cpu/engine.ts` |
 | WebGPU engine: one workgroup per system, K steps per dispatch | `src/engine/gpu` |
 | Instanced-disc renderer reading the simulation buffers directly | `src/engine/render` |
-| Protocols (crystal growth), interaction, symmetry release | `src/engine/core`, `src/sim` |
+| Protocols (crystal growth, Lennard-Jones only), interaction, symmetry release | `src/engine/core`, `src/sim` |
 | The site | `src/site` |
 
 The physics, including where it deliberately differs from the C reference

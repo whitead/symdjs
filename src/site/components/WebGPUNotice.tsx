@@ -1,13 +1,11 @@
-// Shown in place of the frontispiece when WebGPU is unavailable (or with
-// ?nogpu). A static wallpaper (a real p4m orbit, drawn once as SVG) behind
-// a note on paper; the rest of the page stays readable below it.
+// Shown instead of the whole site when WebGPU is unavailable (or with
+// ?nogpu): a p4m wallpaper behind a short note on paper.
 
 import { useMemo } from "react";
 import { planeGroup } from "../lib/groups";
 import { applyAffine } from "../../engine/math/affine";
 import { useGpuSupport } from "../hooks/useGpuSupport";
 import { PALETTE } from "../lib/palette";
-import { ArrowDownIcon } from "./Icons";
 import "../styles/components/webgpu-notice.css";
 
 const BROWSERS = [
@@ -91,7 +89,7 @@ export function WebGPUNotice() {
         </h1>
         <p className="gpu-notice__lede">
           Every plate in <cite>An Atlas of Symmetric Molecular Dynamics</cite> is a live simulation computed on your
-          graphics card. Your browser does not offer WebGPU, so the plates below are shown as still engravings.
+          graphics card, and this browser does not offer WebGPU.
         </p>
         <h2 className="gpu-notice__subhead">Browsers that will run it</h2>
         <ul className="gpu-notice__browsers">
@@ -112,10 +110,13 @@ export function WebGPUNotice() {
             </>
           )}
         </p>
-        <a className="gpu-notice__continue" href="#cabinet">
-          Read on: the text and still plates follow
-          <ArrowDownIcon size={14} />
-        </a>
+        <p className="gpu-notice__small">
+          After S. Cox &amp; A. D. White,{" "}
+          <a href="https://doi.org/10.1021/acs.jctc.2c00401">
+            <cite>Symmetric Molecular Dynamics</cite>
+          </a>
+          , J. Chem. Theory Comput. 18, 4077 (2022).
+        </p>
       </div>
     </header>
   );

@@ -108,8 +108,7 @@ export function Footer() {
         </div>
 
         <p className="footer__colophon">
-          Set in Fraunces, IBM Plex Sans and IBM Plex Mono. Simulated with WebGPU in your browser; nothing is sent to a
-          server.
+          Set in Fraunces, IBM Plex Sans and IBM Plex Mono.
         </p>
       </div>
     </footer>

@@ -16,7 +16,6 @@ import { Cabinet } from "./sections/Cabinet";
 import { Footer } from "./sections/Footer";
 import { Hero } from "./sections/Hero";
 import { HowItWorks } from "./sections/HowItWorks";
-import { Lab } from "./sections/Lab";
 
 export function App() {
   return (
@@ -28,17 +27,18 @@ export function App() {
 
 function Page() {
   const { supported } = useGpuSupport();
+  // every plate is a live simulation: without WebGPU there is nothing to show
+  if (!supported) return <WebGPUNotice />;
   return (
     <>
       <a className="skip-link" href="#main">
         Skip to the atlas
       </a>
-      {supported ? <Hero /> : <WebGPUNotice />}
+      <Hero />
       <main id="main">
         <Cabinet />
         <HowItWorks />
         <Atlas />
-        <Lab />
       </main>
       <Footer />
     </>

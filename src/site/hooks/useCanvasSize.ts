@@ -1,7 +1,5 @@
 // Keeps a canvas's backing store matched to its CSS box at device resolution.
-// Shared by the Canvas2D placeholder and (later) the WebGPU view: WebGPU
-// reads canvas.width/height when configuring the swap chain, so the same
-// hook sizes both.
+// WebGPU reads canvas.width/height for the swap chain.
 
 import { useEffect, useState, type RefObject } from "react";
 

@@ -160,7 +160,9 @@ diagrams in the style of an old natural-history atlas.
 3. ~~WebGPU engine and renderer, plus a dev page running all groups.~~ Done.
    The GPU matches the CPU to float32 precision, NPT included.
 4. ~~Atlas site: hero, cabinet, explainer, plates, interaction.~~ Done.
-5. ~~Lab~~ (custom generators, export). Done. Performance and polish are
+5. Lab removed at the owner's request: the site is an art piece, not a
+   tool. `src/engine/groups/custom.ts` (closing generators, detecting the
+   setting) remains in the engine with its tests. Performance and polish are
    ongoing.
 6. Later: 3D. The group tables load and pass tests. Still needed: a 3D
    kernel instantiation (`makeLayout(3)`), a sphere renderer, and 3D
@@ -181,5 +183,14 @@ diagrams in the style of an old natural-history atlas.
   - 64 systems in total.
 * Systems step only while their canvas is visible. Protocols advance with
   the system, so each plate grows its crystal when you arrive.
-* Without WebGPU, the page shows the notice. Each simulation slot falls
-  back to a static Canvas2D toy preview (`src/site/sim/placeholder`).
+* The site is gated: without WebGPU only the notice renders, with no
+  previews or fallbacks.
+* Lennard-Jones only (rc = 3σ), with no potential choice in the UI.
+* Random starts use sequential insertion so that every image stays ≥ 0.9σ
+  from every other image. Growth then starts with capped-force LJ, and no
+  soft potential is needed.
+* Firefox (naga → Metal) passes each workgroup variable as a separate
+  threadgroup argument, and Metal allows at most 31. Keep the kernel's
+  workgroup memory packed into a few structs (`Ctl`, `OpW`, `SiteW`).
+  Firefox is slower per dispatch (about 10 ms per 200 steps, against about
+  2 ms in Chrome), so the hub adapts steps per frame to the frame rate.

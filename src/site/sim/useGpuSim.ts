@@ -1,7 +1,7 @@
-// The WebGPU driver behind SimSlot (same signature as the Canvas2D
-// placeholder). It owns one symmetric system per slot, grows a crystal with
-// the protocol, hands control to the user's sliders, releases/restores the
-// symmetry, styles the explainer stages, and reports throttled stats.
+// The WebGPU driver behind SimSlot. It owns one symmetric system per slot,
+// grows a crystal with the protocol, hands control to the user's sliders,
+// releases/restores the symmetry, styles the explainer stages, and reports
+// throttled stats. Lennard-Jones throughout.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { growProtocol } from "../../engine/core/protocol";
@@ -10,16 +10,14 @@ import { planeGroup } from "../../engine/groups/library";
 import type { SimView, ViewOptions } from "../../engine/render/renderer";
 import type { HubView, SimHub } from "../../sim/hub";
 import { attachDrag, releaseSymmetry } from "../../sim/interact";
-import { cellPositions } from "../../engine/core/system";
-import { formatOp } from "../../engine/groups/custom";
-import type { Group } from "../../engine/groups/group";
+import type { PotentialSpec } from "../../engine/core/potentials";
 import type { CanvasSize } from "../hooks/useCanvasSize";
 import { useGpuSupport } from "../hooks/useGpuSupport";
 import { occupancyKey } from "../lib/groups";
-import type { SimDriverOptions, SimMode } from "./placeholder/usePlaceholderSim";
-import type { ExplainerStage, SimPhase, SimVariant } from "./types";
-import { POTENTIALS } from "./potentials";
+import type { ExplainerStage, SimDriverOptions, SimMode, SimPhase, SimVariant } from "./types";
 import { getHub } from "./useSim";
+
+const LJ: PotentialSpec = { kind: "lj", epsilon: 1, sigma: 1, rc: 3 };
 
 interface VariantConfig {
   /** CSS px per σ (wide / compact screens) */
@@ -82,11 +80,6 @@ function stageLook(stage: ExplainerStage): StageLook {
 
 const FAST_STEPS = 1500;
 
-function displayView(d: SimDriverOptions["display"]): Partial<ViewOptions> {
-  if (!d) return {};
-  const { scale: _scale, ...rest } = d;
-  return Object.fromEntries(Object.entries(rest).filter(([, v]) => v !== undefined)) as Partial<ViewOptions>;
-}
 
 function phaseOf(sys: GpuSystem, released: boolean): SimPhase {
   if (released) return "released";
@@ -115,8 +108,6 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
 
   const { variant, group, seed, params, stage } = opts;
   const occKey = occupancyKey(opts.occupancy);
-  const groupKey = opts.groupObj ? `${opts.groupObj.name}:${opts.groupObj.lattice}:${opts.groupObj.ops.map(formatOp).join(";")}` : group;
-  const displayKey = JSON.stringify(opts.display ?? {});
   const released = params.released || stage === "release";
   const hasCanvas = !!size;
 
@@ -131,7 +122,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         if (cancelled || !canvas) return;
         hubRef.current = hub;
         const o = optsRef.current;
-        const g: Group = o.groupObj ?? planeGroup(o.group);
+        const g = planeGroup(o.group);
         let sys: GpuSystem;
         try {
           sys = hub.engine.add({
@@ -139,7 +130,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
             occupancy: o.occupancy,
             density: 0.35,
             seed: o.seed,
-            params: { potential: POTENTIALS[o.params.potential] },
+            params: { potential: LJ },
           });
         } catch (e) {
           // a configuration the GPU kernel cannot hold (too many particles, no free slot)
@@ -155,7 +146,6 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         const view: Partial<ViewOptions> = {
           ...cfg.view,
           ...(o.stage ? stageLook(o.stage).view : {}),
-          ...displayView(o.display),
           manageSize: false,
           centerCell: false,
         };
@@ -166,30 +156,6 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         fastRef.current = o.variant === "explainer" || modeRef.current === "static";
         if (fastRef.current) canvas.style.opacity = "0";
         if (o.interactive) cleanupDrag = attachDrag(hub.engine, hv.view);
-        o.onApi?.({
-          exportCell: async () => {
-            const cur = hv.view.sys;
-            const { s, B } = await hub.engine.downloadState(cur);
-            const frac = cellPositions(cur.data, s);
-            const fractional: number[][] = [];
-            const cartesian: number[][] = [];
-            for (let q = 0; q < cur.data.nCell; q++) {
-              const f = [frac[2 * q], frac[2 * q + 1]];
-              fractional.push(f);
-              cartesian.push([B[0] * f[0] + B[1] * f[1], B[2] * f[0] + B[3] * f[1]]);
-            }
-            return {
-              group: cur.group.name,
-              lattice: cur.group.lattice,
-              B: Array.from(B),
-              fractional,
-              cartesian,
-              rep: Array.from(cur.data.imageRep),
-              op: Array.from(cur.data.imageOp),
-              released: cur === relRef.current,
-            };
-          },
-        });
         setGeneration((x) => x + 1);
       },
       (e) => markUnsupported(String(e?.message ?? e)),
@@ -207,15 +173,9 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
       relRef.current = null;
       const canvas = canvasRef.current;
       if (canvas) canvas.style.opacity = "";
-      optsRef.current.onApi?.(null);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supported, hasCanvas, groupKey, occKey, seed, variant, params.regrow]);
-
-  // ---- display overrides ----
-  useEffect(() => {
-    hvRef.current?.view.setOptions(displayView(optsRef.current.display));
-  }, [displayKey]);
+  }, [supported, hasCanvas, group, occKey, seed, variant, params.regrow]);
 
   /** per-frame: fast-forward, camera, explainer breathing */
   function frame(v: SimView, hv: HubView) {
@@ -245,7 +205,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     const B = symB ?? v.B;
     const cssW = v.canvas.clientWidth || 1;
     const cssH = v.canvas.clientHeight || 1;
-    let target = o.display?.scale ?? (cssW < 640 ? cfg.compactScale : cfg.scale);
+    let target = cssW < 640 ? cfg.compactScale : cfg.scale;
     if (o.stage) {
       const xs = [0, B[0], B[1], B[0] + B[1]];
       const ys = [0, B[2], B[3], B[2] + B[3]];
@@ -271,7 +231,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
       const phi = sys.data.nCell / Math.max(1, sys.data.n);
       if (sys.runner) sys.setProtocol(null);
       const t = performance.now() / 1000;
-      sys.setParams({ T: 0.08 * phi, P: 1.2 + 0.9 * Math.sin(1.3 * t), gamma: 1, nptEvery: 1, potential: POTENTIALS.lj, forceCap: Infinity });
+      sys.setParams({ T: 0.08 * phi, P: 1.2 + 0.9 * Math.sin(1.3 * t), gamma: 1, nptEvery: 1, potential: LJ, forceCap: Infinity });
     }
   }
 
@@ -299,7 +259,7 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     sys.setParams({
       T: p.temperature * phi,
       P: isReleased ? null : p.pressure,
-      potential: POTENTIALS[p.potential],
+      potential: LJ,
       gamma: isReleased ? 0.5 : 1,
       forceCap: Infinity,
       nptEvery: 2,
@@ -309,13 +269,13 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
   // ---- user controls take over from the protocol ----
   useEffect(() => {
     const b = baseParams.current;
-    const unchanged = b.temperature === params.temperature && b.pressure === params.pressure && b.potential === params.potential;
+    const unchanged = b.temperature === params.temperature && b.pressure === params.pressure;
     if (!manualRef.current && unchanged) return;
     manualRef.current = true;
     if (relRef.current) applyManual(relRef.current, true);
     else if (symRef.current) applyManual(symRef.current, false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.temperature, params.pressure, params.potential]);
+  }, [params.temperature, params.pressure]);
 
   // ---- release / restore the symmetry ----
   useEffect(() => {

@@ -174,8 +174,35 @@ function samplePolygonPoint(group: Group, rng: Rng): number[] {
   }
 }
 
-/** Random initial state: reps placed in the asymmetric unit, Maxwell–Boltzmann velocities. */
-export function initialState(data: SystemData, density: number, seed: number, T: number): SystemState {
+/** Shortest Cartesian distance between fractional points a and b over lattice translations. */
+function periodicDistance(a: ArrayLike<number>, b: ArrayLike<number>, B: Float64Array, D: number): number {
+  const d = new Float64Array(D);
+  for (let c = 0; c < D; c++) d[c] = a[c] - b[c] - Math.round(a[c] - b[c]);
+  let best = Infinity;
+  const n = new Int32Array(D).fill(-1);
+  for (;;) {
+    let r2 = 0;
+    for (let i = 0; i < D; i++) {
+      let x = 0;
+      for (let c = 0; c < D; c++) x += B[i * D + c] * (d[c] + n[c]);
+      r2 += x * x;
+    }
+    best = Math.min(best, r2);
+    let k = 0;
+    while (k < D && ++n[k] > 1) n[k++] = -1;
+    if (k === D) break;
+  }
+  return Math.sqrt(best);
+}
+
+/**
+ * Random initial state with Maxwell–Boltzmann velocities. Reps are placed by
+ * random sequential insertion: each candidate position is kept only if all of
+ * its symmetric images stay at least `minDist` σ from every image placed so
+ * far (and from each other), so Lennard-Jones can run from the first step.
+ * Point sites go first, then lines, then the general position.
+ */
+export function initialState(data: SystemData, density: number, seed: number, T: number, minDist = 0.9): SystemState {
   const { D, group, n } = data;
   const rng = new Rng(seed);
   const lp = group.latticeParams;
@@ -184,17 +211,47 @@ export function initialState(data: SystemData, density: number, seed: number, T:
   const sm = siteMatrices(group, B);
   const u = new Float64Array(n * D);
   const v = new Float64Array(n * D);
-  for (let i = 0; i < n; i++) {
+  const placed: Float64Array[] = [];
+  const order = Array.from({ length: n }, (_, i) => i).sort(
+    (a, b) => group.sites[data.siteOf[a]].k - group.sites[data.siteOf[b]].k,
+  );
+  const s = new Float64Array(D);
+  const cand = new Float64Array(D);
+  for (const i of order) {
     const site = group.sites[data.siteOf[i]];
-    if (site.general) {
-      const pt = samplePolygonPoint(group, rng);
-      for (let c = 0; c < D; c++) u[i * D + c] = pt[c];
-    } else {
-      for (let c = 0; c < site.k; c++) {
-        const [lo, hi] = site.uRange[c];
-        u[i * D + c] = lo + (hi - lo) * rng.next();
+    let best: Float64Array | null = null;
+    let bestImages: Float64Array[] = [];
+    let bestD = -1;
+    const tries = site.k === 0 ? 1 : 400;
+    for (let t = 0; t < tries && bestD < minDist; t++) {
+      if (site.general) {
+        const pt = samplePolygonPoint(group, rng);
+        for (let c = 0; c < D; c++) cand[c] = pt[c];
+      } else
+        for (let c = 0; c < site.k; c++) {
+          const [lo, hi] = site.uRange[c];
+          cand[c] = lo + (hi - lo) * rng.next();
+        }
+      positionOf(site, cand, 0, D, s, 0);
+      const images = site.cosetOps.map((g) => applyAffine(group.ops[g], s).map(wrap01) as Float64Array);
+      let dmin = Infinity;
+      for (const im of images) for (const q of placed) dmin = Math.min(dmin, periodicDistance(im, q, B, D));
+      for (let a = 0; a < images.length; a++)
+        for (let b = a; b < images.length; b++) {
+          // distinct images, and an image with its own lattice copies
+          const dd = periodicDistance(images[a], images[b], B, D);
+          if (a !== b) dmin = Math.min(dmin, dd);
+        }
+      if (dmin > bestD) {
+        bestD = dmin;
+        best = Float64Array.from(cand);
+        bestImages = images;
       }
     }
+    for (let c = 0; c < D; c++) u[i * D + c] = best![c];
+    placed.push(...bestImages);
+  }
+  for (let i = 0; i < n; i++) {
     const sd = Math.sqrt(T / data.orbit[i]);
     const raw = Array.from({ length: D }, () => sd * rng.normal());
     const Pv = sm.Pv[data.siteOf[i]];

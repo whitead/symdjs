@@ -91,34 +91,37 @@ describe("Langevin equipartition with orbit masses", () => {
   it("general and Wyckoff reps both reach T (p4m)", () => {
     const g = planeGroup("p4m");
     const T = 0.8;
-    const sim = relaxed({
-      group: g,
-      occupancy: { g: 3, e: 2, a: 1 },
-      density: 0.3,
-      seed: 3,
-      params: { T, gamma: 10, dt: 0.004 },
-    });
-    sim.step(2000);
-    const { D, n, siteOf, orbit, group } = sim.data;
+    // few reps per site, so average two independent runs
     const acc = new Map<string, { s: number; c: number }>();
-    for (let k = 0; k < 1500; k++) {
-      sim.step(20);
-      for (let i = 0; i < n; i++) {
-        const site = group.sites[siteOf[i]];
-        if (site.k === 0) continue;
-        let v2 = 0;
-        for (let a = 0; a < D; a++) v2 += sim.state.v[i * D + a] ** 2;
-        const rec = acc.get(site.letter) ?? { s: 0, c: 0 };
-        rec.s += (orbit[i] * v2) / site.k;
-        rec.c++;
-        acc.set(site.letter, rec);
+    for (const seed of [3, 4]) {
+      const sim = relaxed({
+        group: g,
+        occupancy: { g: 3, e: 2, a: 1 },
+        density: 0.3,
+        seed,
+        params: { T, gamma: 10, dt: 0.004 },
+      });
+      sim.step(2000);
+      const { D, n, siteOf, orbit, group } = sim.data;
+      for (let k = 0; k < 1500; k++) {
+        sim.step(20);
+        for (let i = 0; i < n; i++) {
+          const site = group.sites[siteOf[i]];
+          if (site.k === 0) continue;
+          let v2 = 0;
+          for (let a = 0; a < D; a++) v2 += sim.state.v[i * D + a] ** 2;
+          const rec = acc.get(site.letter) ?? { s: 0, c: 0 };
+          rec.s += (orbit[i] * v2) / site.k;
+          rec.c++;
+          acc.set(site.letter, rec);
+        }
       }
     }
     for (const [letter, { s, c }] of acc) {
       expect(s / c / T, `site ${letter}`).toBeGreaterThan(0.94);
       expect(s / c / T, `site ${letter}`).toBeLessThan(1.06);
     }
-  });
+  }, 30000);
 });
 
 describe("NPT samples the right volume distribution", () => {

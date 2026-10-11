@@ -26,7 +26,6 @@ export interface Protocol {
 }
 
 const LJ: PotentialSpec = { kind: "lj", epsilon: 1, sigma: 1, rc: 3 };
-const SOFT: PotentialSpec = { kind: "soft", epsilon: 30, sigma: 1, rc: 1.1 };
 
 /** Grow a crystal from a dilute random start (compress under NPT, then anneal). */
 export function growProtocol(opts: { P?: number; Tmelt?: number; Tfinal?: number; speed?: number } = {}): Protocol {
@@ -37,7 +36,8 @@ export function growProtocol(opts: { P?: number; Tmelt?: number; Tfinal?: number
   return {
     holdLast: true,
     stages: [
-      { name: "settling", steps: Math.round(400 * k), Tstar: [0.5, 0.5], P: null, gamma: 10, potential: SOFT },
+      // random starts overlap: push them apart with capped Lennard-Jones forces
+      { name: "settling", steps: Math.round(500 * k), Tstar: [0.5, 0.5], P: null, gamma: 10, potential: LJ, forceCap: 20 },
       { name: "melting", steps: Math.round(800 * k), Tstar: [Tm, Tm], P: null, gamma: 2, potential: LJ, forceCap: 60 },
       { name: "compressing", steps: Math.round(12000 * k), Tstar: [Tm, 0.2], P, gamma: 1, potential: LJ, nptEvery: 2 },
       { name: "annealing", steps: Math.round(16000 * k), Tstar: [0.2, Tf], P, gamma: 1, potential: LJ, nptEvery: 2 },

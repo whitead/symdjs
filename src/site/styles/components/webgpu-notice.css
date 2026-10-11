@@ -150,17 +150,3 @@
   white-space: nowrap;
 }
 
-.gpu-notice__continue {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: var(--space-l);
-  font-family: var(--font-mono);
-  font-size: var(--step--2);
-  letter-spacing: var(--tracking-caps);
-  text-transform: uppercase;
-  color: var(--ink);
-  text-decoration: none;
-  border-bottom: 1px solid var(--ink);
-  padding-bottom: 0.2rem;
-}
