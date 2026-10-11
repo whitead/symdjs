@@ -75,8 +75,18 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VSOut
   out.position = vec4f((qc - view.center + c * view.radius * pad) * view.scale, 0.0, 1.0);
   out.local = c * pad;
   var idx = j;
+  let si = topo[view.slot * TOPO_STRIDE + OFF_SITEOF + j] & 255u;
   if (view.colorMode == 1u) { idx = g; }
-  else if (view.colorMode == 2u) { idx = topo[view.slot * TOPO_STRIDE + OFF_SITEOF + j] & 255u; }
+  else if (view.colorMode == 2u) { idx = si; }
+  else if (view.colorMode == 4u) {
+    // site kind: 0 general, 1 line, 2 point
+    let k = topo[view.slot * TOPO_STRIDE + OFF_SITES + si * SITEW + 6u];
+    idx = select(select(1u, 2u, k == 0u), 0u, k == 2u);
+  }
+  else if (view.colorMode == 5u) {
+    // handedness: proper ops (rotations) 0, improper (mirror images) 1
+    idx = select(0u, 1u, determinant(R) < 0.0);
+  }
   var col = view.palette[idx % max(view.nColors, 1u)];
   if (view.colorMode == 3u) { col = view.ink; }
   var kind = 0u;
@@ -95,12 +105,8 @@ fn fs(in: VSOut) -> @location(0) vec4f {
   let aa = 1.6 / max(1.0, view.radius * view.pxPerSigma);
   let alpha = 1.0 - smoothstep(1.0 - aa, 1.0, r);
   if (alpha <= 0.0) { discard; }
+  // flat discs
   var col = in.color.rgb;
-  // engraved-dot shading: soft highlight up-left, darker rim
-  let hl = 1.0 - smoothstep(0.0, 0.75, length(in.local - vec2f(-0.35, 0.4)));
-  col = mix(col, vec3f(1.0), 0.18 * hl);
-  let rim = smoothstep(0.62, 1.0, r);
-  col = mix(col, col * 0.62, rim * 0.55);
   var a = alpha;
   let isRep = (in.kind & 1u) != 0u;
   if ((view.flags & 1u) != 0u && isRep) {

@@ -39,7 +39,7 @@
 }
 
 .wyckoff__chip[data-active][data-kind="line"] {
-  background: linear-gradient(0deg, rgb(87 117 144 / 0.09), rgb(87 117 144 / 0.09)), var(--paper-raised);
+  background: linear-gradient(0deg, rgb(248 150 30 / 0.09), rgb(248 150 30 / 0.09)), var(--paper-raised);
 }
 
 .wyckoff__site {
@@ -60,7 +60,7 @@
 }
 
 .wyckoff__chip[data-active] .wyckoff__glyph {
-  color: var(--ink-2);
+  color: var(--c-slate);
 }
 
 .wyckoff__chip[data-active][data-kind="point"] .wyckoff__glyph {
@@ -68,7 +68,7 @@
 }
 
 .wyckoff__chip[data-active][data-kind="line"] .wyckoff__glyph {
-  color: var(--c-slate);
+  color: var(--c-saffron);
 }
 
 .wyckoff__mult {

@@ -7,7 +7,7 @@ import { boxFromParams } from "../groups/bravais";
 import type { GpuEngine, GpuSystem } from "../gpu/engine";
 import { discShader, lineShader, MAX_COLORS } from "./shaders";
 
-export type ColorMode = "rep" | "op" | "site" | "ink";
+export type ColorMode = "rep" | "op" | "site" | "ink" | "kind" | "hand";
 
 export interface ViewOptions {
   /** σ visible across the shorter canvas side */
@@ -44,6 +44,10 @@ export interface ViewOptions {
   /** size the canvas backing store from its CSS box (off when the page manages it) */
   manageSize: boolean;
 }
+
+/** Few-colour palettes: site kind (general, line, point) and handedness (proper, improper). */
+export const KIND_PALETTE = ["#577590", "#f8961e", "#f94144"];
+export const HAND_PALETTE = ["#577590", "#43aa8b"];
 
 /** The paper's Figure 2 palette, ordered so consecutive indices contrast. */
 export const PALETTE = ["#f94144", "#277da1", "#f9c74f", "#43aa8b", "#f3722c", "#577590", "#90be6d", "#f8961e", "#4d908e", "#f9844a"];
@@ -285,7 +289,7 @@ export class SimView {
     u[7] = ny;
     u[8] = sys.slot;
     u[9] = nCell;
-    u[10] = { rep: 0, op: 1, site: 2, ink: 3 }[o.colorMode];
+    u[10] = { rep: 0, op: 1, site: 2, ink: 3, kind: 4, hand: 5 }[o.colorMode];
     u[11] = Math.min(o.palette.length, MAX_COLORS);
     f[12] = o.radius;
     f[13] = pxPerSigma;
