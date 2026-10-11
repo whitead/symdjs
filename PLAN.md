@@ -195,6 +195,14 @@ diagrams in the style of an old natural-history atlas.
   moving as symmetric droplets and chains. Barostat box moves made the old
   dense crystals jitter. Only the explainer still grows a crystal (NPT), to
   illustrate the lattice step.
+* A sticky pressure slider above the grid drives every tile: fixed volume
+  by default, or a log-scale barostat pressure P = 0.002–2. Below the LJ
+  triple point (T* = 0.28) a cell is either vapor-like or condensed, so low
+  P evaporates the pattern and high P squeezes it into a crystal. Box moves
+  are capped (`mcMaxDelta` = 0.01) so the cell drifts instead of jittering.
+* Every simulation can be maximized (Fullscreen API, with a full-window
+  fallback). Methods runs the same live dynamics at ρ = 0.2, and its lattice
+  step breathes the pressure.
 * Pointer interaction is a bounded "touch": a Gaussian repulsion
   u = A·exp(−r²/2w²) (A = 6ε, w = 1.4σ) at the cursor and at every
   symmetric image of it, so the external field stays G-invariant. The old
