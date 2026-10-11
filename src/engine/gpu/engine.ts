@@ -43,6 +43,8 @@ export class GpuSystem {
   paramsDirty = true;
   disposed = false;
   label = "";
+  /** lattice parameters at the last upload (used before the first stats readback) */
+  initialP = new Float64Array(0);
 
   constructor(
     readonly engine: GpuEngine,
@@ -220,6 +222,8 @@ export class GpuEngine {
     bf[BOX.delta] = 0.004;
     this.device.queue.writeBuffer(this.boxBuf, sys.slot * L.BOXW * 4, box);
     sys.step = st.step;
+    sys.initialP = Float64Array.from(st.p);
+    sys.stats = null;
     sys.paramsDirty = true;
   }
 

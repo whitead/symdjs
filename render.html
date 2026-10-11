@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" /><title>Render dev</title>
+    <style>
+      body { margin: 0; background: #f5f4e9; font-family: ui-monospace, monospace; color: #1f2430; }
+      #hero { width: 100%; height: 420px; display: block; }
+      #grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; padding: 16px; }
+      .card canvas { width: 100%; aspect-ratio: 1; display: block; border: 1px solid #1f243022; }
+      .card div { font-size: 12px; padding: 4px 0; }
+    </style>
+  </head>
+  <body>
+    <canvas id="hero"></canvas>
+    <div id="grid"></div>
+    <pre id="status">starting</pre>
+    <script type="module" src="/src/dev/renderDev.ts"></script>
+  </body>
+</html>
