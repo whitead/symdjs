@@ -4,6 +4,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { Group } from "../../engine/groups/group";
 import { GROUP_NOTES, cellCount, defaultOccupancy, occupancyLabel, type Occupancy } from "../lib/groups";
+import { plateDefaults } from "../content/defaults";
 import { DEFAULT_PARAMS, type Potential, type SimParams, type SimStats } from "../sim/types";
 import { Button } from "./Button";
 import { DiagramSlot } from "./DiagramSlot";
@@ -34,7 +35,7 @@ const POTENTIALS: { value: Potential; label: string; title: string }[] = [
 ];
 
 export function Plate({ group, flip }: PlateProps) {
-  const [occupancy, setOccupancy] = useState<Occupancy>(() => defaultOccupancy(group));
+  const [occupancy, setOccupancy] = useState<Occupancy>(() => ({ ...(plateDefaults[group.name] ?? defaultOccupancy(group)) }));
   const [params, setParams] = useState<SimParams>(DEFAULT_PARAMS);
   const [latest, setLatest] = useState<SimStats | null>(null);
   const [history, setHistory] = useState<History>({ density: [], energy: [], temperature: [], pressure: [] });

@@ -31,6 +31,18 @@ export interface ViewOptions {
   maxDpr: number;
   /** draw only the home unit cell (no lattice copies) */
   homeOnly: boolean;
+  /** CSS pixels per σ; overrides `span` when > 0 */
+  cssPxPerSigma: number;
+  /** grid line opacity */
+  gridAlpha: number;
+  /** alpha for particles outside the home cell (1 = no dimming) */
+  tileAlpha: number;
+  /** alpha for particles on the general position (1 = no dimming) */
+  generalAlpha: number;
+  /** keep the home cell centred in the view (follows the live box) */
+  centerCell: boolean;
+  /** size the canvas backing store from its CSS box (off when the page manages it) */
+  manageSize: boolean;
 }
 
 /** The paper's Figure 2 palette, ordered so consecutive indices contrast. */
@@ -52,6 +64,12 @@ export const defaultViewOptions: ViewOptions = {
   highlightRep: -1,
   maxDpr: 2,
   homeOnly: false,
+  cssPxPerSigma: 0,
+  gridAlpha: 0.1,
+  tileAlpha: 1,
+  generalAlpha: 1,
+  centerCell: false,
+  manageSize: true,
 };
 
 function hexToRgba(hex: string, alpha = 1): [number, number, number, number] {
@@ -60,7 +78,7 @@ function hexToRgba(hex: string, alpha = 1): [number, number, number, number] {
   return [((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255, alpha];
 }
 
-const VIEW_BYTES = 96 + MAX_COLORS * 16;
+const VIEW_BYTES = 112 + MAX_COLORS * 16;
 const SEG_FLOATS = 12;
 const MAX_SEGS = 1024;
 
@@ -110,6 +128,8 @@ export class SimView {
   private B0: Float64Array;
   /** current mapping (for pointer → simulation coordinates) */
   pxPerSigma = 1;
+  /** called at the start of every render (e.g. to animate the camera) */
+  onBeforeRender: ((v: SimView) => void) | null = null;
   size: [number, number] = [1, 1];
 
   constructor(
@@ -169,6 +189,7 @@ export class SimView {
   }
 
   private resize(): [number, number] {
+    if (!this.opts.manageSize) return [Math.max(1, this.canvas.width), Math.max(1, this.canvas.height)];
     const dpr = Math.min(window.devicePixelRatio || 1, this.opts.maxDpr);
     const w = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
     const h = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
@@ -191,10 +212,16 @@ export class SimView {
   }
 
   render(encoder: GPUCommandEncoder) {
+    this.onBeforeRender?.(this);
     const [w, h] = this.resize();
     this.size = [w, h];
     const o = this.opts;
-    const pxPerSigma = Math.min(w, h) / o.span;
+    if (o.centerCell) {
+      const Bc = this.B;
+      o.center = [0.5 * (Bc[0] + Bc[1]), 0.5 * (Bc[2] + Bc[3])];
+    }
+    const dprNow = w / Math.max(1, this.canvas.clientWidth);
+    const pxPerSigma = o.cssPxPerSigma > 0 ? o.cssPxPerSigma * dprNow : Math.min(w, h) / o.span;
     this.pxPerSigma = pxPerSigma;
     const sys = this.sys;
     const { nCell, n } = sys.data;
@@ -253,17 +280,21 @@ export class SimView {
     f[12] = o.radius;
     f[13] = pxPerSigma;
     i32[14] = o.highlightRep;
-    u[15] = (o.markReps ? 1 : 0) | (o.ghostAlpha < 0.999 ? 2 : 0);
+    u[15] =
+      (o.markReps ? 1 : 0) | (o.ghostAlpha < 0.999 ? 2 : 0) | (o.tileAlpha < 0.999 ? 4 : 0) | (o.generalAlpha < 0.999 ? 8 : 0);
     f[16] = o.ghostAlpha;
     f[17] = performance.now() / 1000;
     u[18] = n;
+    u[19] = sys.group.sites.length - 1;
     f.set(hexToRgba(o.ink), 20);
-    o.palette.slice(0, MAX_COLORS).forEach((c, i) => f.set(hexToRgba(c), 24 + i * 4));
+    f[24] = o.tileAlpha;
+    f[25] = o.generalAlpha;
+    o.palette.slice(0, MAX_COLORS).forEach((c, i) => f.set(hexToRgba(c), 28 + i * 4));
     const device = this.renderer.engine.device;
     device.queue.writeBuffer(this.viewBuf, 0, this.viewData);
 
     // overlay segments (fractional coordinates; the shader applies the live box)
-    const key = `${x0},${y0},${nx},${ny},${o.showGrid},${o.showCell},${o.showAsym},${o.ink}`;
+    const key = `${x0},${y0},${nx},${ny},${o.showGrid},${o.gridAlpha},${o.showCell},${o.showAsym},${o.ink}`;
     if (key !== this.segKey) {
       this.segKey = key;
       this.buildSegments(x0, y0, nx, ny);
@@ -308,7 +339,7 @@ export class SimView {
     };
     const dpr = Math.min(window.devicePixelRatio || 1, o.maxDpr);
     if (o.showGrid) {
-      const c = hexToRgba(o.ink, 0.1);
+      const c = hexToRgba(o.ink, o.gridAlpha);
       for (let i = 0; i <= nx; i++) push([x0 + i, y0], [x0 + i, y0 + ny], c, 1 * dpr);
       for (let j = 0; j <= ny; j++) push([x0, y0 + j], [x0 + nx, y0 + j], c, 1 * dpr);
     }

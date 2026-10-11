@@ -13,6 +13,7 @@ import { useInView } from "../hooks/useInView";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { defaultOccupancy, planeGroup, type Occupancy } from "../lib/groups";
 import { usePlaceholderSim, type SimMode } from "../sim/placeholder/usePlaceholderSim";
+import { useGpuSim } from "../sim/useGpuSim";
 import { DEFAULT_PARAMS, type ExplainerStage, type SimParams, type SimStats, type SimVariant } from "../sim/types";
 import { PauseIcon, PlayIcon } from "./Icons";
 import "../styles/components/sim-slot.css";
@@ -64,14 +65,11 @@ export function SimSlot({
   const wantsPlay = userPlaying ?? !reducedMotion;
   const mode: SimMode = !supported ? "static" : !wantsPlay ? (userPlaying === false ? "paused" : "static") : inView ? "live" : "paused";
 
-  // ---- PLACEHOLDER: swap for the WebGPU view hook ----
-  usePlaceholderSim(
-    canvasRef,
-    size,
-    { variant, group, occupancy: occ, seed, params, stage, interactive: INTERACTIVE[variant] && supported, reducedMotion, onStats },
-    mode,
-  );
-  // -----------------------------------------------------
+  // WebGPU drives the canvas; without WebGPU the Canvas2D toy model draws a
+  // static preview instead (each hook ignores the canvas when size is null)
+  const driver = { variant, group, occupancy: occ, seed, params, stage, interactive: INTERACTIVE[variant] && supported, reducedMotion, onStats };
+  useGpuSim(canvasRef, supported ? size : null, driver, mode);
+  usePlaceholderSim(canvasRef, supported ? null : size, driver, mode);
 
   const toggle = useCallback(() => setUserPlaying(!wantsPlay), [wantsPlay]);
 

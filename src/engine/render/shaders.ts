@@ -23,8 +23,12 @@ struct View {
   ghostAlpha: f32,
   time: f32,
   nReps: u32,
-  pad: u32,
+  generalSite: u32,
   ink: vec4f,
+  tileAlpha: f32,
+  generalAlpha: f32,
+  pad0: f32,
+  pad1: f32,
   palette: array<vec4f, ${MAX_COLORS}>,
 }
 `;
@@ -78,6 +82,8 @@ fn vs(@builtin(vertex_index) vi: u32, @builtin(instance_index) ii: u32) -> VSOut
   var kind = 0u;
   if (g == 0u && tx == 0 && ty == 0) { kind = 1u; }
   if (i32(j) == view.highlightRep) { kind = kind | 2u; }
+  if (tx == 0 && ty == 0) { kind = kind | 4u; }
+  if ((topo[view.slot * TOPO_STRIDE + OFF_SITEOF + j] & 255u) == view.generalSite) { kind = kind | 8u; }
   out.color = col;
   out.kind = kind;
   return out;
@@ -102,10 +108,10 @@ fn fs(in: VSOut) -> @location(0) vec4f {
     let ring = smoothstep(0.70 - aa, 0.70, r) * (1.0 - smoothstep(0.86, 0.86 + aa, r));
     col = mix(col, view.ink.rgb, ring);
   }
-  if ((view.flags & 2u) != 0u && !isRep) {
-    a = a * view.ghostAlpha;
-    if (a <= 0.001) { discard; }
-  }
+  if ((view.flags & 2u) != 0u && !isRep) { a = a * view.ghostAlpha; }
+  if ((view.flags & 4u) != 0u && (in.kind & 4u) == 0u) { a = a * view.tileAlpha; }
+  if ((view.flags & 8u) != 0u && (in.kind & 8u) != 0u) { a = a * view.generalAlpha; }
+  if (a <= 0.001) { discard; }
   if (view.highlightRep >= 0) {
     if ((in.kind & 2u) != 0u) {
       // every image of the grabbed particle gets a bold ink ring
