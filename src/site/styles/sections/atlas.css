@@ -1,24 +1,66 @@
+/* controls in a sticky column to the left of the grid */
+.atlas__body {
+  display: grid;
+  grid-template-columns: 13rem minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(0.8rem, 0.4rem + 1.2vw, 1.6rem);
+  width: min(100% - 2 * var(--gutter), 112rem);
+  margin: var(--space-xl) auto 0;
+}
+
 .atlas__grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(min(100%, 14rem), 1fr));
   gap: clamp(0.6rem, 0.3rem + 1vw, 1.1rem);
-  width: min(100% - 2 * var(--gutter), 104rem);
-  margin: var(--space-m) auto 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
-/* the pressure control stays in reach while scrolling the grid; it sits at
-   the grid's left edge and is only as wide as it needs to be */
 .atlas__controls {
   position: sticky;
-  top: 0.5rem;
+  top: 1rem;
   z-index: 5;
-  width: min(100% - 2 * var(--gutter), 20rem);
-  margin: var(--space-xl) 0 0 max(var(--gutter), calc((100% - 104rem) / 2));
-  padding: 0.5rem 0.8rem 0.55rem;
+  display: grid;
+  gap: 0.7rem;
+  padding: 0.7rem 0.8rem 0.6rem;
   border: 1px solid var(--rule-mid);
   background: rgb(251 250 242 / 0.92);
   backdrop-filter: blur(6px);
   box-shadow: var(--shadow-card);
+}
+
+.atlas__check {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+  color: var(--ink-2);
+  cursor: pointer;
+  user-select: none;
+}
+
+.atlas__check input {
+  width: 0.95rem;
+  height: 0.95rem;
+  margin: 0;
+  accent-color: var(--ink);
+  cursor: pointer;
+}
+
+.atlas__check input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* narrow screens: the controls sit above the grid and stay pinned */
+@media (max-width: 52rem) {
+  .atlas__body {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .atlas__controls {
+    top: 0.5rem;
+  }
 }

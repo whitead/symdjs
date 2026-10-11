@@ -34,7 +34,9 @@ export function Atlas() {
     const q = new URLSearchParams(window.location.search).get("p");
     return q !== null && Number.isFinite(Number(q)) ? Math.max(-100, Math.min(100, Number(q))) : DEFAULT_PX;
   });
-  const pressure = pressureAt(px);
+  // constant volume by default; unchecking hands the box to the barostat
+  const [fixedVolume, setFixedVolume] = useState(true);
+  const pressure = fixedVolume ? null : pressureAt(px);
   // a different arrangement of Wyckoff sites on every visit
   const [seed] = useState(() => 1 + ((Math.random() * 1e6) | 0));
   const groups = planeGroups();
@@ -63,25 +65,32 @@ export function Atlas() {
           </p>
         </SectionHeader>
       </div>
-      <div className="atlas__controls">
-        <Slider
-          label="Pressure"
-          symbol="P"
-          value={px}
-          min={-100}
-          max={100}
-          step={1}
-          ticks={10}
-          format={(x) => formatPressure(pressureAt(x))}
-          onChange={setPx}
-          className="atlas__pressure"
-        />
+      <div className="atlas__body">
+        <aside className="atlas__controls" aria-label="Simulation controls">
+          <label className="atlas__check">
+            <input type="checkbox" checked={fixedVolume} onChange={(e) => setFixedVolume(e.currentTarget.checked)} />
+            fixed volume
+          </label>
+          <Slider
+            label="Pressure"
+            symbol="P"
+            value={px}
+            min={-100}
+            max={100}
+            step={1}
+            ticks={10}
+            format={(x) => formatPressure(pressureAt(x))}
+            onChange={setPx}
+            disabled={fixedVolume}
+            className="atlas__pressure"
+          />
+        </aside>
+        <ol className="atlas__grid">
+          {groups.map((g, i) => (
+            <Tile key={g.name} group={g} initial={initial[i]} seed={seed + 101 * g.number} pressure={pressure} />
+          ))}
+        </ol>
       </div>
-      <ol className="atlas__grid">
-        {groups.map((g, i) => (
-          <Tile key={g.name} group={g} initial={initial[i]} seed={seed + 101 * g.number} pressure={pressure} />
-        ))}
-      </ol>
     </section>
   );
 }
