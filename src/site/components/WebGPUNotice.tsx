@@ -88,7 +88,7 @@ export function WebGPUNotice() {
           This atlas needs <em>WebGPU</em>
         </h1>
         <p className="gpu-notice__lede">
-          Every plate in <cite>An Atlas of Symmetric Molecular Dynamics</cite> is a live simulation computed on your
+          Every plate in <cite>An atlas of all 2D crystals</cite> is a live simulation computed on your
           graphics card, and this browser does not offer WebGPU.
         </p>
         <h2 className="gpu-notice__subhead">Browsers that will run it</h2>

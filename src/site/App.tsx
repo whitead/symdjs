@@ -1,4 +1,4 @@
-// An Atlas of Symmetric Molecular Dynamics: page shell.
+// An atlas of all 2D crystals, with symmetric molecular dynamics: page shell.
 
 import "@fontsource-variable/fraunces/full.css";
 import "@fontsource-variable/fraunces/full-italic.css";

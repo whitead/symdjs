@@ -1,6 +1,6 @@
-# An Atlas of Symmetric Molecular Dynamics
+# An atlas of all 2D crystals
 
-Live, interactive molecular dynamics under every two-dimensional plane group
+With symmetric molecular dynamics: live Lennard-Jones simulations under every two-dimensional plane group
 and Wyckoff site, running on the GPU in your browser.
 
 This is a WebGPU implementation of *symmetric molecular dynamics*

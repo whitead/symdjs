@@ -1,14 +1,13 @@
-// Frontispiece: a full-bleed live crystal behind the title, framed like an
+// Frontispiece: a full-bleed live pattern behind the title, framed like an
 // engraved plate.
 
 import { useMemo, useState } from "react";
-import { HandIcon, ArrowDownIcon } from "../components/Icons";
-import { PlateCaption } from "../components/PlateCaption";
 import { SimSlot } from "../components/SimSlot";
-import { occupancyLabel, planeGroup, type Occupancy } from "../lib/groups";
+import { planeGroup, type Occupancy } from "../lib/groups";
 import "../styles/sections/hero.css";
 
 const HERO_GROUPS = ["p6m", "p4m", "p31m", "p4g", "p6", "cmm"];
+const ALL_GROUPS = [...HERO_GROUPS, "p1", "p2", "pm", "pg", "cm", "pmm", "pmg", "pgg", "p4", "p3", "p3m1"];
 
 function heroOccupancy(name: string): Occupancy {
   const g = planeGroup(name);
@@ -26,49 +25,24 @@ export function Hero() {
   const [seed] = useState(() => (Math.random() * 1e6) | 0);
   const name = useMemo(() => {
     const forced = new URLSearchParams(window.location.search).get("hero");
-    return forced && HERO_GROUPS.concat(["p1", "p2", "pm", "pg", "cm", "pmm", "pmg", "pgg", "p4", "p3", "p3m1"]).includes(forced)
-      ? forced
-      : HERO_GROUPS[seed % HERO_GROUPS.length];
+    return forced && ALL_GROUPS.includes(forced) ? forced : HERO_GROUPS[seed % HERO_GROUPS.length];
   }, [seed]);
-  const group = planeGroup(name);
   const occupancy = useMemo(() => heroOccupancy(name), [name]);
 
   return (
     <header className="hero" id="top">
-      <SimSlot
-        variant="hero"
-        group={name}
-        occupancy={occupancy}
-        seed={seed}
-        label={`A live ${name} simulation. Press and drag to stir it.`}
-      />
+      <SimSlot variant="hero" group={name} occupancy={occupancy} seed={seed} label={`A live ${name} pattern of Lennard-Jones particles`} />
       <div className="hero__veil" aria-hidden="true" />
       <div className="hero__frame" aria-hidden="true" />
 
-      <nav className="masthead" aria-label="Sections">
-        <a className="masthead__mark" href="#top">
-          symd<span>.js</span>
-        </a>
-        <ul className="masthead__links">
-          <li>
-            <a href="#atlas">Atlas</a>
-          </li>
-          <li>
-            <a href="#how">How it works</a>
-          </li>
-        </ul>
-      </nav>
-
       <div className="hero__copy">
         <h1 className="hero__title">
-          <span className="hero__pre">An Atlas of</span>{" "}
+          <span className="hero__pre">An atlas of</span>{" "}
           <span className="hero__main">
-            <em>Symmetric</em> Molecular Dynamics
+            <em>all</em> 2D crystals
           </span>
         </h1>
-        <p className="hero__subtitle">
-          Every way a two-dimensional crystal can be symmetric, simulated live in your browser.
-        </p>
+        <p className="hero__subtitle">with symmetric molecular dynamics</p>
         <p className="hero__credit">
           After S. Cox &amp; A. D. White,{" "}
           <a href="https://doi.org/10.1021/acs.jctc.2c00401">
@@ -77,21 +51,6 @@ export function Hero() {
           , J. Chem. Theory Comput. <b>18</b>, 4077 (2022). Reference implementation:{" "}
           <a href="https://github.com/whitead/symd">whitead/symd</a>.
         </p>
-      </div>
-
-      <div className="hero__foot">
-        <a className="scroll-cue" href="#atlas">
-          <span className="scroll-cue__line" aria-hidden="true" />
-          <span>Begin</span>
-          <ArrowDownIcon size={14} />
-        </a>
-        <div className="hero__legend">
-          <p className="hero__hint">
-            <HandIcon size={15} />
-            press and drag to stir: every symmetric copy of your touch is felt
-          </p>
-          <PlateCaption group={group} kind="Frontispiece" hideNumber extra={occupancyLabel(group, occupancy)} />
-        </div>
       </div>
     </header>
   );

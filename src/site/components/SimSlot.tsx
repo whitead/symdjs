@@ -27,7 +27,7 @@ export interface SimSlotProps {
   children?: ReactNode;
 }
 
-const INTERACTIVE: Record<SimVariant, boolean> = { hero: true, tile: true, explainer: false };
+const INTERACTIVE: Record<SimVariant, boolean> = { hero: false, tile: true, explainer: false };
 
 export function SimSlot({
   variant,
