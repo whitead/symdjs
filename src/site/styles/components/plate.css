@@ -302,3 +302,43 @@
   }
 
 }
+
+/* growth stage chip over the simulation */
+.plate__phase {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.55rem 0.18rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-pill);
+  background: rgb(251 250 242 / 0.86);
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-2);
+  pointer-events: none;
+  backdrop-filter: blur(2px);
+}
+
+.plate__phase-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  border-radius: 50%;
+  background: var(--status-compressing);
+}
+
+.plate__phase[data-phase="annealing"] .plate__phase-dot {
+  background: var(--status-annealing);
+}
+
+.plate__phase[data-phase="crystal"] .plate__phase-dot {
+  background: var(--status-crystal);
+}
+
+.plate__phase[data-phase="released"] .plate__phase-dot {
+  background: var(--status-released);
+}

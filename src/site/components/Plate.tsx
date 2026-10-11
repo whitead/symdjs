@@ -26,6 +26,13 @@ export interface PlateProps {
 
 const HISTORY = 48;
 
+const PHASE_TEXT: Record<SimStats["phase"], string> = {
+  compressing: "compressing…",
+  annealing: "annealing…",
+  crystal: "crystal",
+  released: "symmetry released",
+};
+
 type History = Record<"density" | "energy" | "temperature" | "pressure", number[]>;
 
 const POTENTIALS: { value: Potential; label: string; title: string }[] = [
@@ -77,7 +84,14 @@ export function Plate({ group, flip }: PlateProps) {
               params={params}
               onStats={onStats}
               label={`Live ${group.name} crystal, Wyckoff occupancy ${occLabel}. Drag a particle to move all its images.`}
-            />
+            >
+              {latest && (
+                <span className="plate__phase" data-phase={latest.phase} aria-hidden="true">
+                  <span className="plate__phase-dot" />
+                  {PHASE_TEXT[latest.phase]}
+                </span>
+              )}
+            </SimSlot>
           </div>
           <ReadoutRow className="plate__readouts">
             <Readout label="Density" symbol="ρ" value={latest?.density ?? null} history={history.density} digits={3} />
@@ -92,7 +106,7 @@ export function Plate({ group, flip }: PlateProps) {
               history={history.energy}
               digits={4}
             />
-            <Readout label="Temperature" symbol="T" value={latest?.temperature ?? null} history={history.temperature} />
+            <Readout label="Temperature" symbol="T*" value={latest?.temperature ?? null} history={history.temperature} />
             <Readout label="Pressure" symbol="P" value={latest?.pressure ?? null} history={history.pressure} />
           </ReadoutRow>
         </div>
