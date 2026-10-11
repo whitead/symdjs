@@ -1,0 +1,89 @@
+.diagram-slot {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+
+.diagram-slot__frame {
+  position: relative;
+  aspect-ratio: 1;
+  width: 100%;
+  border: 1px solid var(--rule-mid);
+  background: var(--paper);
+  /* inner plate mark */
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--rule);
+}
+
+.diagram-slot__frame > svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.diagram-slot__caption {
+  font-family: var(--font-mono);
+  font-size: 0.625rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+  text-align: center;
+}
+
+/* ---- placeholder sketch ---- */
+
+.unit-cell__cell {
+  fill: none;
+  stroke: var(--ink);
+  stroke-width: 1.1;
+}
+
+.unit-cell__asym-fill {
+  fill: rgb(249 199 79 / 0.22);
+}
+
+.unit-cell__hatch {
+  stroke: rgb(31 36 48 / 0.28);
+  stroke-width: 0.7;
+}
+
+.unit-cell__asym {
+  fill: none;
+  stroke: rgb(31 36 48 / 0.55);
+  stroke-width: 0.8;
+  stroke-dasharray: 3 2;
+}
+
+.unit-cell__mirror {
+  stroke: var(--c-slate);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
+.unit-cell__point {
+  fill: var(--c-vermilion);
+  stroke: var(--paper);
+  stroke-width: 1.4;
+}
+
+.unit-cell__letter {
+  font-family: var(--font-text);
+  font-style: italic;
+  font-size: 11px;
+  fill: var(--ink);
+  paint-order: stroke;
+  stroke: var(--paper);
+  stroke-width: 3px;
+  stroke-linejoin: round;
+}
+
+.unit-cell__letter--line {
+  fill: var(--slate-ink);
+}
+
+.unit-cell__axis {
+  font-family: var(--font-text);
+  font-style: italic;
+  font-size: 11px;
+  fill: var(--ink-3);
+}

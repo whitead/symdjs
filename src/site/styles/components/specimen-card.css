@@ -1,0 +1,166 @@
+.specimen {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  border: 1px solid var(--rule-mid);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+  transition:
+    transform var(--dur) var(--ease-out),
+    box-shadow var(--dur) var(--ease-out);
+}
+
+.specimen:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 1px 1px rgb(62 52 20 / 0.05),
+    0 16px 30px -18px rgb(62 52 20 / 0.42);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .specimen:hover {
+    transform: none;
+  }
+}
+
+/* the crystal sits on a mat inside a plate mark */
+.specimen__mat {
+  padding: 0.55rem 0.55rem 0;
+}
+
+.specimen__mat .sim-slot {
+  outline: 1px solid var(--rule-mid);
+  outline-offset: 0;
+}
+
+.specimen__label {
+  display: grid;
+  align-content: start;
+  gap: 0.2rem;
+  padding: 0.65rem 0.8rem 0.75rem;
+}
+
+.specimen__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.specimen__no {
+  color: var(--ink-3);
+}
+
+.specimen__plate {
+  color: var(--mark-ink);
+  text-decoration: none;
+}
+
+.specimen__plate:hover {
+  text-decoration: underline;
+}
+
+.specimen__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.55rem;
+  font-size: var(--step-3);
+  font-weight: 380;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.specimen__orbifold {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  letter-spacing: 0.02em;
+  color: var(--ink-3);
+}
+
+.specimen__occ {
+  font-family: var(--font-mono);
+  font-size: var(--step--1);
+  color: var(--ink);
+  letter-spacing: 0.01em;
+}
+
+.specimen__n {
+  color: var(--ink-3);
+}
+
+.specimen__status {
+  --dot: var(--status-compressing);
+  display: grid;
+  grid-template-columns: auto auto 1fr;
+  align-items: center;
+  gap: 0.45rem;
+  margin-top: 0.3rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--2);
+  font-style: italic;
+  color: var(--ink-2);
+}
+
+.specimen__status[data-phase="annealing"] {
+  --dot: var(--status-annealing);
+}
+
+.specimen__status[data-phase="crystal"] {
+  --dot: var(--status-crystal);
+  font-style: normal;
+  font-weight: 500;
+  color: var(--jade-ink);
+}
+
+.specimen__status[data-phase="released"] {
+  --dot: var(--status-released);
+}
+
+.specimen__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+  background: var(--dot);
+  box-shadow: 0 0 0 1px rgb(31 36 48 / 0.35);
+  animation: breathe 1.4s ease-in-out infinite;
+}
+
+.specimen__status[data-phase="crystal"] .specimen__dot {
+  animation: none;
+}
+
+.specimen__bar {
+  position: relative;
+  height: 1px;
+  background: var(--rule);
+  overflow: hidden;
+}
+
+.specimen__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: var(--ink-3);
+  transform-origin: left;
+  transform: scaleX(var(--progress, 0));
+  transition: transform 300ms linear;
+}
+
+.specimen__status[data-phase="crystal"] .specimen__bar::after {
+  background: var(--status-crystal);
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .specimen__dot {
+    animation: none;
+  }
+}

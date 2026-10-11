@@ -1,0 +1,254 @@
+.how__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+  gap: clamp(2rem, 1rem + 4vw, 5.5rem);
+  width: min(var(--content), 100% - 2 * var(--gutter));
+  margin: var(--space-2xl) auto 0;
+}
+
+.how__sticky {
+  position: relative;
+}
+
+.how__figure {
+  position: sticky;
+  top: max(1.5rem, calc(50vh - min(39vh, 23rem) - 2.5rem));
+  display: grid;
+  gap: 0.7rem;
+}
+
+.how__mat {
+  padding: 0.6rem;
+  border: 1px solid var(--rule-mid);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-plate);
+}
+
+.how__mat .sim-slot {
+  outline: 1px solid var(--rule-mid);
+  max-height: min(78vh, 46rem);
+  margin-inline: auto;
+}
+
+.how__caption {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.8rem;
+  align-items: baseline;
+  min-height: 3.2em;
+  font-size: var(--step--1);
+  line-height: 1.45;
+  color: var(--ink-2);
+}
+
+.how__fig {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--mark-ink);
+  white-space: nowrap;
+}
+
+.how__caption-text {
+  font-style: italic;
+  animation: caption-in var(--dur-slow) var(--ease-out);
+}
+
+@keyframes caption-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+.how__dots {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.how__dots li {
+  flex: 1;
+  height: 2px;
+  background: var(--rule);
+  transition: background var(--dur) var(--ease-out);
+}
+
+.how__dots li[data-done] {
+  background: var(--rule-strong);
+}
+
+.how__dots li[data-active] {
+  background: var(--c-vermilion);
+}
+
+/* ---- steps ---- */
+
+.how__steps {
+  display: grid;
+  padding-bottom: 20vh;
+}
+
+.how__step {
+  display: grid;
+  align-content: center;
+  gap: 0.6rem;
+  min-height: 78vh;
+  padding-block: var(--space-xl);
+  opacity: 0.32;
+  transition: opacity var(--dur-slow) var(--ease-out);
+}
+
+.how__step:first-child {
+  min-height: 60vh;
+  align-content: start;
+  padding-top: 18vh;
+}
+
+.how__step[data-active] {
+  opacity: 1;
+}
+
+.how__num {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  color: var(--mark-ink);
+}
+
+.how__num::after {
+  content: "";
+  width: 2.25rem;
+  height: 1px;
+  background: currentColor;
+  opacity: 0.6;
+}
+
+.how__title {
+  font-size: var(--step-3);
+  font-weight: 380;
+  line-height: 1.1;
+}
+
+.how__text {
+  max-width: 34rem;
+  color: var(--ink-2);
+}
+
+.how__text em {
+  color: var(--ink);
+}
+
+.formula,
+.math-inline {
+  font-family: var(--font-math);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+.formula {
+  padding: 0 0.15em;
+}
+
+.math-inline .up,
+.how__formula .up {
+  font-style: normal;
+  padding-inline: 0.04em;
+}
+
+.wy i {
+  font-style: italic;
+}
+
+/* ---- margin note ---- */
+
+.how__note-wrap {
+  padding-block: var(--space-xl) 0;
+}
+
+.how__note {
+  position: relative;
+  display: grid;
+  gap: 0.6rem;
+  padding: var(--space-m) var(--space-m) var(--space-m) calc(var(--space-m) + 6px);
+  border: 1px solid var(--rule-mid);
+  background:
+    linear-gradient(90deg, var(--c-maize) 0 3px, transparent 3px),
+    var(--paper-raised);
+  font-size: var(--step--1);
+  line-height: 1.55;
+  color: var(--ink-2);
+  box-shadow: var(--shadow-card);
+}
+
+.how__note-kicker {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink);
+}
+
+.how__formula {
+  font-family: var(--font-math);
+  font-size: var(--step-2);
+  color: var(--ink);
+}
+
+.how__formula sub {
+  font-family: var(--font-ui);
+  font-size: 0.42em;
+  letter-spacing: 0.04em;
+  margin-left: 0.1em;
+  font-style: normal;
+}
+
+/* ---- narrow: figure pinned to the top, steps scroll beneath ---- */
+
+@media (max-width: 52rem) {
+  .how__body {
+    grid-template-columns: 1fr;
+    gap: 0;
+    margin-top: var(--space-l);
+  }
+
+  .how__sticky {
+    position: sticky;
+    top: 0;
+    z-index: 3;
+    padding-block: 0.5rem 0.4rem;
+    background: var(--paper);
+    background-image: var(--paper-grain);
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .how__figure {
+    position: static;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.4rem;
+  }
+
+  .how__mat {
+    padding: 0.35rem;
+    width: min(100%, 38vh);
+    margin-inline: auto;
+  }
+
+  .how__caption {
+    min-height: 2.9em;
+    font-size: var(--step--2);
+  }
+
+  .how__step,
+  .how__step:first-child {
+    min-height: 70vh;
+    align-content: start;
+    padding-top: var(--space-xl);
+  }
+}

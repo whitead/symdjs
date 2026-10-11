@@ -1,0 +1,154 @@
+/* ==========================================================================
+   Design tokens: An Atlas of Symmetric Molecular Dynamics
+   "Plates from a natural-history atlas, reimagined as a modern explorable."
+   Every colour, size, rule and timing used by the site lives here.
+   ========================================================================== */
+
+:root {
+  /* ---- Paper & ink ------------------------------------------------------ */
+  --paper: #f5f4e9; /* the paper's Figure 2 background */
+  --paper-raised: #fbfaf2; /* cards, plates */
+  --paper-sunk: #edebdc; /* wells, insets, sim mats */
+  --paper-deep: #e4e1cc; /* pressed states, tracks */
+  --paper-edge: #d9d5bc; /* plate-mark shadow line */
+
+  --ink: #1f2430; /* body text, rules */
+  --ink-2: #444a57; /* secondary text */
+  --ink-3: #6b6f78; /* captions, labels (AA on paper) */
+  --ink-4: #9a9a94; /* disabled, faint marks */
+
+  --rule: rgb(31 36 48 / 0.14); /* hairlines */
+  --rule-mid: rgb(31 36 48 / 0.28);
+  --rule-strong: rgb(31 36 48 / 0.62);
+
+  /* ---- Figure palette (Cox & White 2022) -------------------------------- */
+  --c-vermilion: #f94144;
+  --c-tangerine: #f3722c;
+  --c-saffron: #f8961e;
+  --c-coral: #f9844a;
+  --c-maize: #f9c74f;
+  --c-pistachio: #90be6d;
+  --c-jade: #43aa8b;
+  --c-sea: #4d908e;
+  --c-slate: #577590;
+  --c-cerulean: #277da1;
+
+  /* text-safe (≥ 4.5:1 on paper) companions of the palette */
+  --vermilion-ink: #c22f2c;
+  --tangerine-ink: #b24a12;
+  --jade-ink: #22735b;
+  --cerulean-ink: #1b5c78;
+  --slate-ink: #3d5670;
+
+  /* ---- Semantic colour -------------------------------------------------- */
+  --accent: var(--c-cerulean);
+  --accent-ink: var(--cerulean-ink);
+  --mark: var(--c-vermilion); /* plate numbers, chapter marks */
+  --mark-ink: var(--vermilion-ink);
+  --focus: var(--c-cerulean);
+  --selection: rgb(249 199 79 / 0.55);
+
+  --status-compressing: var(--c-tangerine);
+  --status-annealing: var(--c-maize);
+  --status-crystal: var(--c-jade);
+  --status-released: var(--c-vermilion);
+
+  --lattice-oblique: var(--c-saffron);
+  --lattice-rectangular: var(--c-jade);
+  --lattice-square: var(--c-cerulean);
+  --lattice-hexagonal: var(--c-vermilion);
+
+  /* ---- Typography ------------------------------------------------------- */
+  --font-display: "Fraunces Variable", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-text: "Fraunces Variable", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --font-ui: "IBM Plex Sans Variable", "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* glyphs missing from the faces above (ρ, ∗, ⁻¹ …) */
+  --font-math: "STIX Two Math", "Cambria Math", "Times New Roman", serif;
+
+  /* Fraunces axes */
+  --fraunces-display: "opsz" 144, "SOFT" 30, "WONK" 0;
+  --fraunces-display-italic: "opsz" 144, "SOFT" 60, "WONK" 1;
+  --fraunces-text: "opsz" 14, "SOFT" 0, "WONK" 0;
+
+  /* fluid modular scale (≈1.25 at small, ≈1.333 at large) */
+  --step--2: clamp(0.69rem, 0.67rem + 0.08vw, 0.75rem);
+  --step--1: clamp(0.8rem, 0.77rem + 0.13vw, 0.875rem);
+  --step-0: clamp(1rem, 0.96rem + 0.2vw, 1.125rem);
+  --step-1: clamp(1.17rem, 1.1rem + 0.36vw, 1.4rem);
+  --step-2: clamp(1.4rem, 1.27rem + 0.62vw, 1.85rem);
+  --step-3: clamp(1.7rem, 1.47rem + 1.1vw, 2.45rem);
+  --step-4: clamp(2.05rem, 1.68rem + 1.85vw, 3.3rem);
+  --step-5: clamp(2.5rem, 1.9rem + 3vw, 4.5rem);
+  --step-6: clamp(2.9rem, 1.6rem + 6.4vw, 7.6rem);
+
+  --leading-display: 0.98;
+  --leading-tight: 1.12;
+  --leading-snug: 1.3;
+  --leading-body: 1.62;
+
+  --tracking-caps: 0.16em; /* small caps labels */
+  --tracking-mono: 0.01em;
+  --tracking-display: -0.02em;
+
+  /* ---- Space ------------------------------------------------------------ */
+  --space-3xs: 0.25rem;
+  --space-2xs: 0.5rem;
+  --space-xs: 0.75rem;
+  --space-s: 1rem;
+  --space-m: 1.5rem;
+  --space-l: 2rem;
+  --space-xl: 3rem;
+  --space-2xl: 4.5rem;
+  --space-3xl: 6.5rem;
+  --space-section: clamp(5rem, 3rem + 8vw, 10rem);
+
+  /* ---- Layout ----------------------------------------------------------- */
+  --measure: 36rem; /* reading column */
+  --content: 78rem; /* plates, grids */
+  --gutter: clamp(1rem, 0.4rem + 2.6vw, 2.75rem);
+  --masthead-h: 3.5rem;
+
+  /* ---- Lines, radii, elevation ----------------------------------------- */
+  --hairline: 1px;
+  --rule-w: 1px;
+  --plate-mark-inset: 6px; /* gap of the double "plate mark" border */
+  --radius-xs: 2px;
+  --radius-s: 4px;
+  --radius-m: 7px;
+  --radius-pill: 999px;
+
+  --shadow-plate:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 1px 1px rgb(62 52 20 / 0.05),
+    0 18px 40px -26px rgb(62 52 20 / 0.32);
+  --shadow-card:
+    0 1px 0 rgb(255 255 255 / 0.7) inset,
+    0 1px 1px rgb(62 52 20 / 0.05),
+    0 10px 24px -18px rgb(62 52 20 / 0.35);
+  --shadow-press: inset 0 1px 2px rgb(31 36 48 / 0.16);
+
+  /* ---- Motion ----------------------------------------------------------- */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 120ms;
+  --dur: 220ms;
+  --dur-slow: 640ms;
+
+  /* ---- Paper texture ---------------------------------------------------- */
+  /* fine grain + slow mottling, both generated by SVG turbulence (no images) */
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.16 0 0 0 0 0.14 0 0 0 0 0.08 0 0 0 -1.15 0.82'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)' opacity='0.2'/%3E%3C/svg%3E");
+  --paper-mottle: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='900' height='900'%3E%3Cfilter id='m'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.004' numOctaves='3' seed='7' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.55 0 0 0 0 0.48 0 0 0 0 0.25 0 0 0 1.4 -0.62'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23m)' opacity='0.12'/%3E%3C/svg%3E");
+  /* diagonal engraving hatch for asymmetric units and wells */
+  --hatch: repeating-linear-gradient(135deg, rgb(31 36 48 / 0.16) 0 1px, transparent 1px 6px);
+
+  color-scheme: light;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --dur-fast: 0ms;
+    --dur: 0ms;
+    --dur-slow: 0ms;
+  }
+}

@@ -1,0 +1,36 @@
+.plate-caption {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  column-gap: 0.55em;
+  row-gap: 0.1em;
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  letter-spacing: 0.06em;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.plate-caption__kind {
+  font-weight: 500;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-2);
+}
+
+.plate-caption__num {
+  color: var(--mark-ink);
+}
+
+.plate-caption__sep {
+  color: var(--ink-4);
+}
+
+.plate-caption__hm {
+  font-size: 1.12em;
+  color: var(--ink);
+}
+
+.plate-caption__order i {
+  font-style: italic;
+}
