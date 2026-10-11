@@ -26,19 +26,22 @@ interface VariantConfig {
   scale: number;
   compactScale: number;
   steps: number;
+  /** steps per frame while the growth protocol is still running */
+  growSteps: number;
   view: Partial<ViewOptions>;
 }
 
 const VARIANTS: Record<SimVariant, VariantConfig> = {
-  hero: { scale: 27, compactScale: 18, steps: 120, view: { colorMode: "op", showCell: false, showGrid: false } },
-  card: { scale: 20, compactScale: 15, steps: 120, view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.07 } },
+  hero: { scale: 27, compactScale: 18, steps: 120, growSteps: 400, view: { colorMode: "op", showCell: false, showGrid: false } },
+  card: { scale: 20, compactScale: 15, steps: 120, growSteps: 200, view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.07 } },
   plate: {
     scale: 27,
     compactScale: 19,
     steps: 120,
+    growSteps: 240,
     view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.08, showAsym: true, markReps: true },
   },
-  explainer: { scale: 15, compactScale: 12, steps: 60, view: { colorMode: "op" } },
+  explainer: { scale: 15, compactScale: 12, steps: 60, growSteps: 60, view: { colorMode: "op" } },
 };
 
 interface StageLook {
@@ -218,6 +221,10 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
         v.canvas.style.transition = "opacity 600ms ease";
         v.canvas.style.opacity = "1";
       }
+    }
+    if (!fastRef.current) {
+      const r = sys.runner;
+      hv.steps = r && r.stage < r.protocol.stages.length - 1 ? cfg.growSteps : cfg.steps;
     }
     hv.paused = !fastRef.current && modeRef.current !== "live";
 
