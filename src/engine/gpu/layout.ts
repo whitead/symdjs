@@ -69,7 +69,7 @@ export function makeLayout(D: number): Layout {
   return {
     D, WG, NMAX, IMGMAX, OPMAX, SITEMAX, COSETMAX, MMAX, TMAX, RMAX, OPW, SITEW,
     OFF_OPS, OFF_SITES, OFF_COSETS, OFF_SITEOF, OFF_IMG, TOPO_STRIDE, SYSW, BOXW,
-    REPW: 4 * vecW, POSW: vecW, MAX_SLOTS: 32,
+    REPW: 4 * vecW, POSW: vecW, MAX_SLOTS: 64,
   };
 }
 
