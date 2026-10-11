@@ -50,30 +50,48 @@ export function dragTo(sys: GpuSystem, grab: Grab, x: [number, number], B: Float
 export function attachDrag(engine: GpuEngine, view: SimView, onGrab?: (g: Grab | null) => void): () => void {
   const canvas = view.canvas;
   let grab: Grab | null = null;
-  let pending = false;
+  /** pointer currently held down (picking is async; a quick click may end first) */
+  let downId: number | null = null;
+  let picking = false;
   const local = (e: PointerEvent): [number, number] => {
     const r = canvas.getBoundingClientRect();
     return view.toSim(e.clientX - r.left, e.clientY - r.top);
   };
+  let lastX: [number, number] = [0, 0];
   const down = async (e: PointerEvent) => {
-    if (pending || e.button !== 0) return;
-    pending = true;
-    const x = local(e);
-    const g = await pick(engine, view.sys, x);
-    pending = false;
-    if (!g) return;
+    if (picking || downId !== null || e.button !== 0) return;
+    downId = e.pointerId;
+    picking = true;
+    lastX = local(e);
+    const sys = view.sys;
+    let g: Grab | null = null;
+    try {
+      g = await pick(engine, sys, lastX);
+    } catch {
+      g = null;
+    }
+    picking = false;
+    // released (or system swapped) while we were picking: do nothing
+    if (!g || downId !== e.pointerId || view.sys !== sys) return;
     grab = g;
-    canvas.setPointerCapture(e.pointerId);
+    try {
+      canvas.setPointerCapture(e.pointerId);
+    } catch {
+      /* pointer already gone */
+    }
     view.setOptions({ highlightRep: g.rep });
-    dragTo(view.sys, g, x, view.B);
+    dragTo(view.sys, g, lastX, view.B);
     onGrab?.(g);
     canvas.style.cursor = "grabbing";
   };
   const move = (e: PointerEvent) => {
-    if (!grab) return;
-    dragTo(view.sys, grab, local(e), view.B);
+    if (e.pointerId !== downId) return;
+    lastX = local(e);
+    if (grab) dragTo(view.sys, grab, lastX, view.B);
   };
-  const up = () => {
+  const up = (e: PointerEvent) => {
+    if (e.pointerId !== downId) return;
+    downId = null;
     if (!grab) return;
     grab = null;
     view.sys.drag = null;
@@ -90,6 +108,7 @@ export function attachDrag(engine: GpuEngine, view: SimView, onGrab?: (g: Grab |
     canvas.removeEventListener("pointermove", move);
     canvas.removeEventListener("pointerup", up);
     canvas.removeEventListener("pointercancel", up);
+    if (grab) view.sys.drag = null;
   };
 }
 

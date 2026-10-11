@@ -252,8 +252,18 @@ export class SimView {
     // margin of one tile for box changes not yet read back
     let x0 = Math.floor(fx0) - 1;
     let y0 = Math.floor(fy0) - 1;
-    let nx = Math.min(Math.ceil(fx1) - x0 + 1, 80);
-    let ny = Math.min(Math.ceil(fy1) - y0 + 1, 80);
+    let nx = Math.ceil(fx1) - x0 + 1;
+    let ny = Math.ceil(fy1) - y0 + 1;
+    // cap the instance count, keeping the kept tiles centred on the view
+    const MAXT = 80;
+    if (nx > MAXT) {
+      x0 += Math.floor((nx - MAXT) / 2);
+      nx = MAXT;
+    }
+    if (ny > MAXT) {
+      y0 += Math.floor((ny - MAXT) / 2);
+      ny = MAXT;
+    }
     if (o.homeOnly) {
       x0 = 0;
       y0 = 0;

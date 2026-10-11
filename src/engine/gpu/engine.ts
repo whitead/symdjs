@@ -5,10 +5,13 @@
 import { linearPart, translationPart } from "../math/affine";
 import { potentialParams } from "../core/potentials";
 import { ProtocolRunner, type Protocol } from "../core/protocol";
+import { boxFromParams } from "../groups/bravais";
+import { det } from "../math/linalg";
 import {
   buildSystemData,
   defaultParams,
   initialState,
+  positionOf,
   type SimParams,
   type SystemData,
   type SystemSpec,
@@ -45,6 +48,8 @@ export class GpuSystem {
   label = "";
   /** lattice parameters at the last upload (used before the first stats readback) */
   initialP = new Float64Array(0);
+  /** has the kernel run on the current state (energies are only known after a dispatch) */
+  dispatched = false;
 
   constructor(
     readonly engine: GpuEngine,
@@ -216,14 +221,25 @@ export class GpuEngine {
         reps[i * L.REPW + 2 + a] = st.v[i * D + a];
       }
     this.device.queue.writeBuffer(this.repsBuf, sys.slot * L.NMAX * L.REPW * 4, reps);
+    // box record, including B and V so the system renders before its first step
     const box = new ArrayBuffer(L.BOXW * 4);
     const bf = new Float32Array(box);
     st.p.forEach((v, i) => (bf[BOX.p + i] = v));
+    const B = boxFromParams(sys.data.group.latticeParams, st.p);
+    for (let i = 0; i < D * D; i++) bf[BOX.B + i] = B[i];
+    bf[BOX.V] = Math.abs(det(B, D));
     bf[BOX.delta] = 0.004;
     this.device.queue.writeBuffer(this.boxBuf, sys.slot * L.BOXW * 4, box);
+    // positions (s = wrap(t + L u)) for the renderer and picking
+    const s = new Float64Array(n * D);
+    for (let i = 0; i < n; i++) positionOf(sys.data.group.sites[sys.data.siteOf[i]], st.u, i * D, D, s, i * D);
+    const pos = new Float32Array(n * L.POSW);
+    for (let i = 0; i < n; i++) for (let a = 0; a < D; a++) pos[i * L.POSW + a] = s[i * D + a];
+    this.device.queue.writeBuffer(this.posBuf, sys.slot * L.NMAX * L.POSW * 4, pos);
     sys.step = st.step;
     sys.initialP = Float64Array.from(st.p);
     sys.stats = null;
+    sys.dispatched = false;
     sys.paramsDirty = true;
   }
 
@@ -288,6 +304,7 @@ export class GpuEngine {
     pass.end();
     if (!encoder) this.device.queue.submit([enc.finish()]);
     for (const r of list) {
+      r.sys.dispatched = true;
       r.sys.step += r.steps;
       r.sys.runner?.advance(r.steps);
     }
@@ -300,7 +317,7 @@ export class GpuEngine {
     const L = this.layout;
     const staging = this.statsStaging[k];
     this.statsBusy[k] = true;
-    this.statsSlotsAtCopy[k] = this.slots.slice();
+    this.statsSlotsAtCopy[k] = this.slots.map((s) => (s?.dispatched ? s : null));
     const steps = this.slots.map((s) => s?.step ?? 0);
     const enc = this.device.createCommandEncoder();
     enc.copyBufferToBuffer(this.boxBuf, 0, staging, 0, L.MAX_SLOTS * L.BOXW * 4);

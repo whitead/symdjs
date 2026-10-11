@@ -27,6 +27,20 @@ describe("custom groups", () => {
     expect(buildCustomGroup(["-x,y"]).group!.lattice).toBe("Rectangular");
   });
 
+  it("finds standard settings and flags over-constrained cells", () => {
+    // threefold written for a 60° cell is rewritten into the 120° setting
+    const r60 = buildCustomGroup(["-x-y,x"]);
+    expect(r60.error).toBeUndefined();
+    expect(r60.group!.lattice).toBe("Hexagonal");
+    expect(r60.note).toMatch(/standard setting/);
+    // a diagonal mirror allows a rhombic cell; it runs square with a note
+    const rh = buildCustomGroup(["y,x"]);
+    expect(rh.group!.lattice).toBe("Square");
+    expect(rh.note).toMatch(/more general cell/);
+    // standard settings need no note
+    expect(buildCustomGroup(["-y,x"]).note).toBeUndefined();
+  });
+
   it("rejects non-lattice operations and oversize groups", () => {
     expect(buildCustomGroup(["2x,y"]).error).toBeDefined();
     expect(buildCustomGroup(["x+1/3"]).error).toBeDefined();

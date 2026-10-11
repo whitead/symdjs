@@ -3,7 +3,7 @@
 // the protocol, hands control to the user's sliders, releases/restores the
 // symmetry, styles the explainer stages, and reports throttled stats.
 
-import { useEffect, useRef, type RefObject } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 import { growProtocol } from "../../engine/core/protocol";
 import type { GpuSystem } from "../../engine/gpu/engine";
 import { planeGroup } from "../../engine/groups/library";
@@ -110,6 +110,8 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
   const manualRef = useRef(false);
   const fastRef = useRef(false);
   const camRef = useRef<{ scale: number; cx: number; cy: number } | null>(null);
+  /** bumped whenever a new symmetric system is created, so dependent effects re-run */
+  const [generation, setGeneration] = useState(0);
 
   const { variant, group, seed, params, stage } = opts;
   const occKey = occupancyKey(opts.occupancy);
@@ -123,20 +125,27 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     if (!supported || !hasCanvas) return;
     let cancelled = false;
     let cleanupDrag: (() => void) | null = null;
-    getHub()
-      .then((hub) => {
+    getHub().then(
+      (hub) => {
         const canvas = canvasRef.current;
         if (cancelled || !canvas) return;
         hubRef.current = hub;
         const o = optsRef.current;
         const g: Group = o.groupObj ?? planeGroup(o.group);
-        const sys = hub.engine.add({
-          group: g,
-          occupancy: o.occupancy,
-          density: 0.35,
-          seed: o.seed,
-          params: { potential: POTENTIALS[o.params.potential] },
-        });
+        let sys: GpuSystem;
+        try {
+          sys = hub.engine.add({
+            group: g,
+            occupancy: o.occupancy,
+            density: 0.35,
+            seed: o.seed,
+            params: { potential: POTENTIALS[o.params.potential] },
+          });
+        } catch (e) {
+          // a configuration the GPU kernel cannot hold (too many particles, no free slot)
+          console.warn(`symd: cannot simulate ${g.name} here:`, (e as Error).message);
+          return;
+        }
         sys.setProtocol(growProtocol());
         symRef.current = sys;
         baseParams.current = o.params;
@@ -181,8 +190,10 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
             };
           },
         });
-      })
-      .catch((e) => markUnsupported(String(e?.message ?? e)));
+        setGeneration((x) => x + 1);
+      },
+      (e) => markUnsupported(String(e?.message ?? e)),
+    );
     return () => {
       cancelled = true;
       cleanupDrag?.();
@@ -277,26 +288,33 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     }
   }, [stage]);
 
-  // ---- user controls take over from the protocol ----
-  useEffect(() => {
-    const b = baseParams.current;
-    if (b.temperature === params.temperature && b.pressure === params.pressure && b.potential === params.potential) return;
-    manualRef.current = true;
-    const sys = relRef.current ?? symRef.current;
-    if (!sys) return;
-    const phi = relRef.current ? 1 : sys.data.nCell / Math.max(1, sys.data.n);
+  /** Hand a system to the user's sliders (T* is per orbit; released systems have φ = 1). */
+  function applyManual(sys: GpuSystem, isReleased: boolean) {
+    const p = optsRef.current.params;
+    const phi = isReleased ? 1 : sys.data.nCell / Math.max(1, sys.data.n);
     if (sys.runner) {
       sys.setParams(sys.runner.params(1));
       sys.setProtocol(null);
     }
     sys.setParams({
-      T: params.temperature * phi,
-      P: relRef.current ? null : params.pressure,
-      potential: POTENTIALS[params.potential],
-      gamma: 1,
+      T: p.temperature * phi,
+      P: isReleased ? null : p.pressure,
+      potential: POTENTIALS[p.potential],
+      gamma: isReleased ? 0.5 : 1,
       forceCap: Infinity,
       nptEvery: 2,
     });
+  }
+
+  // ---- user controls take over from the protocol ----
+  useEffect(() => {
+    const b = baseParams.current;
+    const unchanged = b.temperature === params.temperature && b.pressure === params.pressure && b.potential === params.potential;
+    if (!manualRef.current && unchanged) return;
+    manualRef.current = true;
+    if (relRef.current) applyManual(relRef.current, true);
+    else if (symRef.current) applyManual(symRef.current, false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [params.temperature, params.pressure, params.potential]);
 
   // ---- release / restore the symmetry ----
@@ -307,19 +325,24 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     if (!hub || !hv || !sym) return;
     let cancelled = false;
     if (released && !relRef.current) {
-      releaseSymmetry(hub.engine, sym, { gamma: 0.5 }).then((rel) => {
-        if (cancelled || !hvRef.current) {
-          rel.dispose();
-          return;
-        }
-        if (manualRef.current) rel.setParams({ T: optsRef.current.params.temperature, potential: POTENTIALS[optsRef.current.params.potential] });
-        relRef.current = rel;
-        hv.view.setSystem(rel);
-        camRef.current = null;
-      });
+      releaseSymmetry(hub.engine, sym, { gamma: 0.5 }).then(
+        (rel) => {
+          // the system may have been rebuilt (or the slot unmounted) meanwhile
+          if (cancelled || symRef.current !== sym || hvRef.current !== hv || relRef.current) {
+            rel.dispose();
+            return;
+          }
+          if (manualRef.current) applyManual(rel, true);
+          relRef.current = rel;
+          hv.view.setSystem(rel);
+          camRef.current = null;
+        },
+        (e) => console.warn("symd: could not release the symmetry:", (e as Error).message),
+      );
     } else if (!released && relRef.current) {
       const rel = relRef.current;
       relRef.current = null;
+      if (manualRef.current) applyManual(sym, false);
       hv.view.setSystem(sym);
       camRef.current = null;
       rel.dispose();
@@ -327,7 +350,8 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     return () => {
       cancelled = true;
     };
-  }, [released, hasCanvas]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [released, generation]);
 
   // ---- throttled stats ----
   useEffect(() => {

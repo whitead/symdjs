@@ -81,7 +81,9 @@ export function Lab() {
 
   const custom = useMemo(() => buildCustomGroup(genText.split("\n")), [genText]);
   const group: Group | undefined = source === "table" ? planeGroup(groupName) : custom.group;
-  const occ = useMemo<Occupancy>(() => (source === "table" ? occupancy : { a: nCustom }), [source, occupancy, nCustom]);
+  const nCustomMax = custom.group ? Math.max(2, Math.floor(96 / custom.group.order)) : 2;
+  const nCustomEff = Math.min(nCustom, nCustomMax);
+  const occ = useMemo<Occupancy>(() => (source === "table" ? occupancy : { a: nCustomEff }), [source, occupancy, nCustomEff]);
 
   const onStats = useCallback((s: SimStats) => {
     setLatest(s);
@@ -223,6 +225,7 @@ export function Lab() {
                   <p className="lab__status" data-ok>
                     |<i>G</i>| = {custom.group.order} · {custom.group.lattice.toLowerCase()} lattice
                   </p>
+                  {custom.note && <p className="lab__note">{custom.note}</p>}
                   <ol className="lab__ops">
                     {custom.group.ops.map((op, i) => (
                       <li key={i}>
@@ -231,7 +234,7 @@ export function Lab() {
                       </li>
                     ))}
                   </ol>
-                  <Slider label="Independent particles" symbol="n" value={nCustom} min={1} max={Math.max(2, Math.floor(96 / custom.group.order))} step={1} format={(v) => String(v)} onChange={setNCustom} />
+                  <Slider label="Independent particles" symbol="n" value={nCustomEff} min={1} max={nCustomMax} step={1} format={(v) => String(v)} onChange={setNCustom} />
                 </>
               ) : (
                 <p className="lab__status" role="alert">
