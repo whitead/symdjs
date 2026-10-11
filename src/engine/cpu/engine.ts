@@ -48,7 +48,7 @@ export interface Translations {
 }
 
 /** Lattice images that can lie within rc: |n_k| ≤ ⌊rc |b*_k| + ½⌋. */
-export function translations(B: Float64Array, Binv: Float64Array, D: number, rc: number, maxM = 6): Translations | null {
+export function translations(B: Float64Array, Binv: Float64Array, D: number, rc: number, maxM = MAX_IMAGES): Translations | null {
   const m = new Int32Array(D);
   let count = 1;
   for (let k = 0; k < D; k++) {
@@ -90,6 +90,8 @@ export interface Box {
 }
 
 const MC_STREAM = 0x5bd1e995;
+/** max lattice images per dimension; shared with the GPU kernel (layout.MMAX) */
+export const MAX_IMAGES = 4;
 
 export class CpuSim {
   readonly data: SystemData;
