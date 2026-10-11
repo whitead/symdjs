@@ -1,11 +1,12 @@
 // I. The atlas: all seventeen plane groups at once, each a live simulation
 // whose Wyckoff sites can be filled.
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { Rng } from "../../engine/math/rng";
 import { SectionHeader } from "../components/SectionHeader";
 import { Slider } from "../components/Slider";
 import { Tile } from "../components/Tile";
+import { useInView } from "../hooks/useInView";
 import { planeGroups, randomOccupancy } from "../lib/groups";
 import "../styles/sections/atlas.css";
 
@@ -37,6 +38,9 @@ export function Atlas() {
   // constant volume by default; unchecking hands the box to the barostat
   const [fixedVolume, setFixedVolume] = useState(true);
   const pressure = fixedVolume ? null : pressureAt(px);
+  // the floating controls show only while the grid is on screen
+  const gridRef = useRef<HTMLOListElement>(null);
+  const gridInView = useInView(gridRef, { rootMargin: "-25% 0px -25% 0px" });
   // a different arrangement of Wyckoff sites on every visit
   const [seed] = useState(() => 1 + ((Math.random() * 1e6) | 0));
   const groups = planeGroups();
@@ -66,7 +70,12 @@ export function Atlas() {
         </SectionHeader>
       </div>
       <div className="atlas__body">
-        <aside className="atlas__controls" aria-label="Simulation controls">
+        <aside
+          className="atlas__controls"
+          aria-label="Simulation controls"
+          data-visible={gridInView || undefined}
+          inert={!gridInView}
+        >
           <label className="atlas__check">
             <input type="checkbox" checked={fixedVolume} onChange={(e) => setFixedVolume(e.currentTarget.checked)} />
             fixed volume
@@ -85,7 +94,7 @@ export function Atlas() {
             className="atlas__pressure"
           />
         </aside>
-        <ol className="atlas__grid">
+        <ol className="atlas__grid" ref={gridRef}>
           {groups.map((g, i) => (
             <Tile key={g.name} group={g} initial={initial[i]} seed={seed + 101 * g.number} pressure={pressure} />
           ))}

@@ -195,9 +195,10 @@ diagrams in the style of an old natural-history atlas.
   moving as symmetric droplets and chains. Barostat box moves made the old
   dense crystals jitter. Only the explainer still grows a crystal (NPT), to
   illustrate the lattice step.
-* A sticky sidebar left of the grid (above it on phones) holds a "fixed
-  volume" checkbox, checked by default, and a pressure slider that is
-  active when the box is unchecked. The slider drives every tile with a
+* A small panel floating in the bottom-right corner of the window (a slim
+  bar on phones) holds a "fixed volume" checkbox, checked by default, and a pressure slider that is
+  active when the box is unchecked. The panel shows only while the atlas
+  grid crosses the middle of the window. The slider drives every tile with a
   signed log scale: P = 0 in the middle, |P| = 0.002–2 either side
   (negative = tension). Box moves are capped (`mcMaxDelta` = 0.004) so the
   cell drifts instead of jittering. Zero or negative pressure has nothing to

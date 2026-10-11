@@ -1,10 +1,5 @@
-/* controls in a sticky column to the left of the grid */
 .atlas__body {
-  display: grid;
-  grid-template-columns: 13rem minmax(0, 1fr);
-  align-items: start;
-  gap: clamp(0.8rem, 0.4rem + 1.2vw, 1.6rem);
-  width: min(100% - 2 * var(--gutter), 112rem);
+  width: min(100% - 2 * var(--gutter), 104rem);
   margin: var(--space-xl) auto 0;
 }
 
@@ -17,17 +12,33 @@
   list-style: none;
 }
 
+/* a small panel floating in the bottom-right corner while the grid is on
+   screen: full grid width, and always in reach while scrolling */
 .atlas__controls {
-  position: sticky;
-  top: 1rem;
-  z-index: 5;
+  position: fixed;
+  right: max(1rem, env(safe-area-inset-right));
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  z-index: 50;
   display: grid;
-  gap: 0.7rem;
-  padding: 0.7rem 0.8rem 0.6rem;
+  gap: 0.6rem;
+  width: 15rem;
+  padding: 0.65rem 0.8rem 0.55rem;
   border: 1px solid var(--rule-mid);
-  background: rgb(251 250 242 / 0.92);
+  background: rgb(251 250 242 / 0.94);
   backdrop-filter: blur(6px);
-  box-shadow: var(--shadow-card);
+  box-shadow: 0 10px 30px -14px rgb(62 52 20 / 0.45), var(--shadow-card);
+  opacity: 0;
+  transform: translateY(0.6rem);
+  pointer-events: none;
+  transition:
+    opacity var(--dur) var(--ease-out),
+    transform var(--dur) var(--ease-out);
+}
+
+.atlas__controls[data-visible] {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
 }
 
 .atlas__check {
@@ -54,13 +65,15 @@
   outline-offset: 2px;
 }
 
-/* narrow screens: the controls sit above the grid and stay pinned */
-@media (max-width: 52rem) {
-  .atlas__body {
-    grid-template-columns: minmax(0, 1fr);
-  }
-
+/* phones: a slim bar across the bottom */
+@media (max-width: 40rem) {
   .atlas__controls {
-    top: 0.5rem;
+    left: 0.6rem;
+    right: 0.6rem;
+    bottom: max(0.6rem, env(safe-area-inset-bottom));
+    width: auto;
+    grid-template-columns: auto minmax(0, 1fr);
+    align-items: center;
+    gap: 0.8rem;
   }
 }
