@@ -10,6 +10,9 @@ Only the asymmetric unit is integrated. Every other particle is a ghost made
 by the group's affine operations, so each configuration is exactly
 symmetric at every step.
 
+Live at **https://whitead.github.io/symdjs/**. Every push to `main` deploys
+there via `.github/workflows/pages.yml`.
+
 ## Running
 
 ```sh
