@@ -1,0 +1,99 @@
+/* ---- atlas tile: one plane group --------------------------------------- */
+
+.tile {
+  display: grid;
+  grid-template-rows: auto auto 1fr;
+  border: 1px solid var(--rule-mid);
+  background: var(--paper-raised);
+  box-shadow: var(--shadow-card);
+}
+
+.tile__mat {
+  padding: 0.5rem 0.5rem 0;
+}
+
+.tile__mat .sim-slot {
+  outline: 1px solid var(--rule-mid);
+}
+
+.tile__label {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.55rem 0.7rem 0.2rem;
+}
+
+.tile__head {
+  display: grid;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.tile__no {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.12em;
+  color: var(--mark-ink);
+}
+
+.tile__name {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: var(--step-2);
+  font-weight: 380;
+  line-height: 1.05;
+  letter-spacing: -0.01em;
+}
+
+.tile__orbifold {
+  font-family: var(--font-mono);
+  font-size: var(--step--2);
+  color: var(--ink-3);
+}
+
+.tile__meta {
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  color: var(--ink-3);
+}
+
+.tile__diagram {
+  width: 3.25rem;
+  height: 3.25rem;
+  flex: none;
+  opacity: 0.85;
+}
+
+.tile__wyckoff {
+  align-self: start;
+  padding: 0.35rem 0.6rem 0.65rem;
+}
+
+/* compact Wyckoff chips for the tiles */
+.wyckoff--compact .wyckoff__chips {
+  gap: 0.25rem;
+}
+
+.wyckoff--compact .wyckoff__chip {
+  padding: 0.12rem 0.2rem 0.12rem 0.4rem;
+  gap: 0.2rem;
+  font-size: 0.78rem;
+}
+
+.wyckoff--compact .wyckoff__glyph {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.wyckoff--compact .wyckoff__stepper button {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.wyckoff--compact .wyckoff__count {
+  min-width: 0.9rem;
+  font-size: 0.72rem;
+}

@@ -235,3 +235,8 @@ sup {
   color: var(--ink-2);
   font-variation-settings: "opsz" 24, "SOFT" 20, "WONK" 0;
 }
+
+/* page sections */
+.section {
+  padding-block: var(--space-section) 0;
+}

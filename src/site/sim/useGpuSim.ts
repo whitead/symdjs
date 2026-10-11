@@ -1,50 +1,49 @@
-// The WebGPU driver behind SimSlot. It owns one symmetric system per slot,
-// grows a crystal with the protocol, hands control to the user's sliders,
-// releases/restores the symmetry, styles the explainer stages, and reports
-// throttled stats. Lennard-Jones throughout.
+// The WebGPU driver behind SimSlot. Each slot owns one symmetric system:
+// the hero and the atlas tiles run live constant-volume Lennard-Jones
+// dynamics (real motion at a moderate temperature); the explainer grows a
+// crystal and restyles it per step. A system that ever goes non-finite is
+// restarted from a fresh random state.
 
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { growProtocol } from "../../engine/core/protocol";
+import { growProtocol, liveProtocol, type Protocol } from "../../engine/core/protocol";
+import type { PotentialSpec } from "../../engine/core/potentials";
+import { initialState } from "../../engine/core/system";
 import type { GpuSystem } from "../../engine/gpu/engine";
 import { planeGroup } from "../../engine/groups/library";
 import type { SimView, ViewOptions } from "../../engine/render/renderer";
 import type { HubView, SimHub } from "../../sim/hub";
-import { attachDrag, releaseSymmetry } from "../../sim/interact";
-import type { PotentialSpec } from "../../engine/core/potentials";
+import { attachProbe, releaseSymmetry } from "../../sim/interact";
 import type { CanvasSize } from "../hooks/useCanvasSize";
 import { useGpuSupport } from "../hooks/useGpuSupport";
 import { occupancyKey } from "../lib/groups";
-import type { ExplainerStage, SimDriverOptions, SimMode, SimPhase, SimVariant } from "./types";
+import type { ExplainerStage, SimDriverOptions, SimMode, SimVariant } from "./types";
 import { getHub } from "./useSim";
 
 const LJ: PotentialSpec = { kind: "lj", epsilon: 1, sigma: 1, rc: 3 };
+
+/** live dynamics: per-orbit temperature, friction, number density */
+const LIVE = { Tstar: 0.3, gamma: 0.1, density: 0.25 };
 
 interface VariantConfig {
   /** CSS px per σ (wide / compact screens) */
   scale: number;
   compactScale: number;
+  /** steps per frame once running */
   steps: number;
-  /** steps per frame while the growth protocol is still running */
+  /** steps per frame while the protocol is still settling/growing */
   growSteps: number;
   view: Partial<ViewOptions>;
 }
 
 const VARIANTS: Record<SimVariant, VariantConfig> = {
-  hero: { scale: 27, compactScale: 18, steps: 120, growSteps: 400, view: { colorMode: "op", showCell: false, showGrid: false } },
-  card: { scale: 20, compactScale: 15, steps: 120, growSteps: 200, view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.07 } },
-  plate: {
-    scale: 27,
-    compactScale: 19,
-    steps: 120,
-    growSteps: 240,
-    view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.08, showAsym: true, markReps: true },
-  },
+  hero: { scale: 24, compactScale: 16, steps: 60, growSteps: 300, view: { colorMode: "op", showCell: false, showGrid: false } },
+  tile: { scale: 12, compactScale: 11, steps: 60, growSteps: 300, view: { colorMode: "rep", showCell: true, showGrid: true, gridAlpha: 0.06 } },
   explainer: { scale: 15, compactScale: 12, steps: 60, growSteps: 60, view: { colorMode: "op" } },
 };
 
 interface StageLook {
   view: Partial<ViewOptions>;
-  /** cells across the view (0 = home cell fills 64% of the view) */
+  /** cells across the view (0 = home cell fills 55% of the view) */
   cells: number;
 }
 
@@ -80,12 +79,12 @@ function stageLook(stage: ExplainerStage): StageLook {
 
 const FAST_STEPS = 1500;
 
+function protocolFor(variant: SimVariant): Protocol {
+  return variant === "explainer" ? growProtocol() : liveProtocol({ Tstar: LIVE.Tstar, gamma: LIVE.gamma });
+}
 
-function phaseOf(sys: GpuSystem, released: boolean): SimPhase {
-  if (released) return "released";
-  const name = sys.runner?.current.name;
-  if (!name || name === "crystal") return "crystal";
-  return name === "annealing" ? "annealing" : "compressing";
+function densityFor(variant: SimVariant): number {
+  return variant === "explainer" ? 0.35 : LIVE.density;
 }
 
 export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: CanvasSize | null, opts: SimDriverOptions, mode: SimMode) {
@@ -98,49 +97,42 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
   const hvRef = useRef<HubView | null>(null);
   const symRef = useRef<GpuSystem | null>(null);
   const relRef = useRef<GpuSystem | null>(null);
-  /** parameters the system was created with; a change means the user took control */
-  const baseParams = useRef(opts.params);
-  const manualRef = useRef(false);
   const fastRef = useRef(false);
   const camRef = useRef<{ scale: number; cx: number; cy: number } | null>(null);
-  /** bumped whenever a new symmetric system is created, so dependent effects re-run */
+  /** bumped when a system is created, so effects that need it re-run */
   const [generation, setGeneration] = useState(0);
 
-  const { variant, group, seed, params, stage } = opts;
+  const { variant, group, seed, stage } = opts;
   const occKey = occupancyKey(opts.occupancy);
-  const released = params.released || stage === "release";
+  const released = stage === "release";
   const hasCanvas = !!size;
 
   // ---- create the system and view ----
   useEffect(() => {
     if (!supported || !hasCanvas) return;
     let cancelled = false;
-    let cleanupDrag: (() => void) | null = null;
+    let cleanupProbe: (() => void) | null = null;
     getHub().then(
       (hub) => {
         const canvas = canvasRef.current;
         if (cancelled || !canvas) return;
         hubRef.current = hub;
         const o = optsRef.current;
-        const g = planeGroup(o.group);
         let sys: GpuSystem;
         try {
           sys = hub.engine.add({
-            group: g,
+            group: planeGroup(o.group),
             occupancy: o.occupancy,
-            density: 0.35,
+            density: densityFor(o.variant),
             seed: o.seed,
-            params: { potential: LJ },
+            params: { potential: LJ, forceCap: 20 },
           });
         } catch (e) {
-          // a configuration the GPU kernel cannot hold (too many particles, no free slot)
-          console.warn(`symd: cannot simulate ${g.name} here:`, (e as Error).message);
+          console.warn(`symd: cannot simulate ${o.group} here:`, (e as Error).message);
           return;
         }
-        sys.setProtocol(growProtocol());
+        sys.setProtocol(protocolFor(o.variant));
         symRef.current = sys;
-        baseParams.current = o.params;
-        manualRef.current = false;
         camRef.current = null;
         const cfg = VARIANTS[o.variant];
         const view: Partial<ViewOptions> = {
@@ -149,20 +141,20 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
           manageSize: false,
           centerCell: false,
         };
-        const hv = hub.attach(canvas, sys, view, cfg.steps);
+        const hv = hub.attach(canvas, sys, view, cfg.growSteps);
         hvRef.current = hv;
         hv.view.onBeforeRender = (v) => frame(v, hv);
         // the explainer (and reduced motion) start from a grown crystal
         fastRef.current = o.variant === "explainer" || modeRef.current === "static";
         if (fastRef.current) canvas.style.opacity = "0";
-        if (o.interactive) cleanupDrag = attachDrag(hub.engine, hv.view);
-        setGeneration((x) => x + 1);
+        if (o.interactive) cleanupProbe = attachProbe(hv.view);
+        setGeneration((g) => g + 1);
       },
       (e) => markUnsupported(String(e?.message ?? e)),
     );
     return () => {
       cancelled = true;
-      cleanupDrag?.();
+      cleanupProbe?.();
       const hub = hubRef.current;
       const hv = hvRef.current;
       hvRef.current = null;
@@ -175,32 +167,36 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
       if (canvas) canvas.style.opacity = "";
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [supported, hasCanvas, group, occKey, seed, variant, params.regrow]);
+  }, [supported, hasCanvas, group, occKey, seed, variant]);
 
-  /** per-frame: fast-forward, camera, explainer breathing */
+  /** per-frame: recovery, fast-forward, steps, camera, explainer breathing */
   function frame(v: SimView, hv: HubView) {
     const o = optsRef.current;
     const sys = v.sys;
     const cfg = VARIANTS[o.variant];
-    // fast-forward growth while hidden
+
+    // a diverged system (non-finite energy) restarts from a fresh state
+    if (sys.stats && sys.stats.status & 1 && hubRef.current) {
+      const fresh = initialState(sys.data, densityFor(o.variant), (sys.seed + 7919 * (sys.step + 1)) >>> 0, 0.1);
+      hubRef.current.engine.uploadState(sys, fresh);
+      sys.setProtocol(protocolFor(o.variant));
+      camRef.current = null;
+    }
+
+    const growing = !!sys.runner && sys.runner.stage < sys.runner.protocol.stages.length - 1;
     if (fastRef.current) {
-      const r = sys.runner;
-      if (r && r.stage < r.protocol.stages.length - 1) hv.steps = FAST_STEPS;
+      if (growing) hv.steps = FAST_STEPS;
       else {
         fastRef.current = false;
-        hv.steps = cfg.steps;
         v.canvas.style.transition = "opacity 600ms ease";
         v.canvas.style.opacity = "1";
       }
     }
-    if (!fastRef.current) {
-      const r = sys.runner;
-      hv.steps = r && r.stage < r.protocol.stages.length - 1 ? cfg.growSteps : cfg.steps;
-    }
+    if (!fastRef.current) hv.steps = growing ? cfg.growSteps : cfg.steps;
     hv.paused = !fastRef.current && modeRef.current !== "live";
 
-    // camera: centre on the home cell, scale per variant or explainer stage;
-    // a released supercell keeps the framing of the original cell
+    // camera: centre on the home cell; a released supercell keeps the
+    // framing of the original cell
     const symB = sys === relRef.current ? symRef.current?.stats?.B : null;
     const B = symB ?? v.B;
     const cssW = v.canvas.clientWidth || 1;
@@ -240,44 +236,16 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     const hv = hvRef.current;
     if (!hv || !stage) return;
     hv.view.setOptions(stageLook(stage).view);
+    // (re-applied when the system is (re)created: see deps)
     const sys = symRef.current;
-    if (sys && stage !== "lattice" && !sys.runner && !manualRef.current) {
+    if (sys && stage !== "lattice" && !sys.runner) {
       // leaving the breathing step: settle back at a steady low pressure
       const phi = sys.data.nCell / Math.max(1, sys.data.n);
       sys.setParams({ T: 0.06 * phi, P: 1, nptEvery: 4 });
     }
-  }, [stage]);
+  }, [stage, generation]);
 
-  /** Hand a system to the user's sliders (T* is per orbit; released systems have φ = 1). */
-  function applyManual(sys: GpuSystem, isReleased: boolean) {
-    const p = optsRef.current.params;
-    const phi = isReleased ? 1 : sys.data.nCell / Math.max(1, sys.data.n);
-    if (sys.runner) {
-      sys.setParams(sys.runner.params(1));
-      sys.setProtocol(null);
-    }
-    sys.setParams({
-      T: p.temperature * phi,
-      P: isReleased ? null : p.pressure,
-      potential: LJ,
-      gamma: isReleased ? 0.5 : 1,
-      forceCap: Infinity,
-      nptEvery: 2,
-    });
-  }
-
-  // ---- user controls take over from the protocol ----
-  useEffect(() => {
-    const b = baseParams.current;
-    const unchanged = b.temperature === params.temperature && b.pressure === params.pressure;
-    if (!manualRef.current && unchanged) return;
-    manualRef.current = true;
-    if (relRef.current) applyManual(relRef.current, true);
-    else if (symRef.current) applyManual(symRef.current, false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [params.temperature, params.pressure]);
-
-  // ---- release / restore the symmetry ----
+  // ---- release / restore the symmetry (explainer) ----
   useEffect(() => {
     const hub = hubRef.current;
     const hv = hvRef.current;
@@ -287,12 +255,10 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     if (released && !relRef.current) {
       releaseSymmetry(hub.engine, sym, { gamma: 0.5 }).then(
         (rel) => {
-          // the system may have been rebuilt (or the slot unmounted) meanwhile
           if (cancelled || symRef.current !== sym || hvRef.current !== hv || relRef.current) {
             rel.dispose();
             return;
           }
-          if (manualRef.current) applyManual(rel, true);
           relRef.current = rel;
           hv.view.setSystem(rel);
           camRef.current = null;
@@ -302,7 +268,6 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     } else if (!released && relRef.current) {
       const rel = relRef.current;
       relRef.current = null;
-      if (manualRef.current) applyManual(sym, false);
       hv.view.setSystem(sym);
       camRef.current = null;
       rel.dispose();
@@ -310,30 +275,5 @@ export function useGpuSim(canvasRef: RefObject<HTMLCanvasElement | null>, size: 
     return () => {
       cancelled = true;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [released, generation]);
-
-  // ---- throttled stats ----
-  useEffect(() => {
-    const id = setInterval(() => {
-      const o = optsRef.current;
-      const hv = hvRef.current;
-      if (!o.onStats || !hv) return;
-      const sys = hv.view.sys;
-      const st = sys.stats;
-      if (!st) return;
-      const isRel = sys === relRef.current;
-      const phi = isRel ? 1 : sys.data.nCell / Math.max(1, sys.data.n);
-      o.onStats({
-        phase: phaseOf(sys, isRel),
-        progress: isRel ? 1 : (sys.runner?.progress ?? 1),
-        nCell: sys.data.nCell,
-        density: st.rho,
-        energy: st.pe,
-        temperature: st.T / phi,
-        pressure: sys.params.P ?? 0,
-      });
-    }, 250);
-    return () => clearInterval(id);
-  }, []);
 }

@@ -166,24 +166,6 @@ export function randomOccupancy(g: Group, rng: Rng): Occupancy {
   return occ;
 }
 
-export interface Specimen {
-  group: Group;
-  occupancy: Occupancy;
-  seed: number;
-}
-
-/** Eight random (group, occupancy) configurations, with no repeated group. */
-export function randomCabinet(seed: number, count = 8): Specimen[] {
-  const rng = new Rng(seed * 7919 + 17);
-  const pool = [...planeGroups()];
-  const out: Specimen[] = [];
-  for (let i = 0; i < count && pool.length; i++) {
-    const group = pool.splice(rng.int(pool.length), 1)[0];
-    out.push({ group, occupancy: randomOccupancy(group, rng), seed: (seed * 131 + i * 977 + 1) >>> 0 });
-  }
-  return out;
-}
-
 // ---- Geometry ------------------------------------------------------------
 
 /**

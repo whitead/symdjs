@@ -31,11 +31,11 @@ export function structsWgsl(L: Layout): string {
 struct Sys {
   n: u32, nCell: u32, nOps: u32, nSites: u32,
   steps: u32, stepStart: u32, seed: u32, nptEvery: u32,
-  potCode: u32, latR: u32, flags: u32, dragRep: i32,
+  potCode: u32, latR: u32, flags: u32, probeOn: i32,
   T: f32, P: f32, gamma: f32, dt: f32,
   eps: f32, sig: f32, rc: f32, shift: f32,
-  forceCap: f32, dragK: f32, pad0: f32, pad1: f32,
-  drag: vec4f,
+  forceCap: f32, probeA: f32, pad0: f32, pad1: f32,
+  probe: vec4f,
   M: array<f32, 64>,
 }
 struct Box {
@@ -112,7 +112,7 @@ var<workgroup> wBc3: u32;
 
 struct Pot {
   code: u32, eps: f32, sig2: f32, rc: f32, rc2: f32, shift: f32,
-  forceCap: f32, dragK: f32, drag: vec2f, dragRep: i32,
+  forceCap: f32, probeA: f32, probe: vec2f, probeW: f32, probeOn: i32, nOps: u32,
 }
 
 fn tf(slot: u32, off: u32) -> f32 { return bitcast<f32>(topo[slot * TOPO_STRIDE + off]); }
@@ -210,7 +210,7 @@ fn main(@builtin(workgroup_id) wid: vec3u, @builtin(local_invocation_index) t: u
   if (t == 0u) { wBc0 = activeSlots[wid.x]; }
   let slot = workgroupUniformLoad(&wBc0);
   let S = sys[slot];
-  let pot = Pot(S.potCode, S.eps, S.sig * S.sig, S.rc, S.rc * S.rc, S.shift, S.forceCap, S.dragK, S.drag.xy, S.dragRep);
+  let pot = Pot(S.potCode, S.eps, S.sig * S.sig, S.rc, S.rc * S.rc, S.shift, S.forceCap, S.probeA, S.probe.xy, S.probe.z, S.probeOn, S.nOps);
   if (t == 0u) { wBc1 = S.n; wBc2 = S.nCell; wBc3 = S.steps; }
   let n = workgroupUniformLoad(&wBc1);
   let nCell = workgroupUniformLoad(&wBc2);
@@ -467,10 +467,16 @@ fn computeForces(slot: u32, P: Pot, n: u32, nCell: u32, t: u32, trial: bool) {
       var F = vec2f(0.0);
       var E = 0.0;
       for (var l = 0u; l < lanes; l++) { F += wPart[t + l]; E += wRed[t + l]; }
-      if (i32(i) == P.dragRep) {
-        var dd = P.drag - wS[i];
-        dd = dd - round(dd);
-        F += P.dragK * (B * dd);
+      if (P.probeOn != 0) {
+        // a soft touch: Gaussian repulsion u = A exp(-r²/2w²) from every
+        // symmetric image of the pointer, so the field stays G-invariant
+        let w2 = P.probeW * P.probeW;
+        for (var g = 0u; g < P.nOps; g++) {
+          var dd = wS[i] - fract(wOps[g].R * P.probe + wOps[g].t);
+          dd = dd - round(dd);
+          let r = B * dd;
+          F += (P.probeA / w2) * exp(-0.5 * dot(r, r) / w2) * r;
+        }
       }
       if (P.forceCap > 0.0) {
         let f2 = dot(F, F);

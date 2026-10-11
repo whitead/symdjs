@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 import { growProtocol, ProtocolRunner } from "../src/engine/core/protocol";
 import { buildSystemData } from "../src/engine/core/system";
 import { makeLayout } from "../src/engine/gpu/layout";
-import { planeGroup, planeGroups } from "../src/engine/groups/library";
-import { plateDefaults } from "../src/site/content/defaults";
+import { planeGroup } from "../src/engine/groups/library";
 import { nCellOf, randomConfigs } from "../src/sim/random";
 
 const L = makeLayout(2);
@@ -28,17 +27,6 @@ describe("random configurations", () => {
         expect(nc).toBeLessThan(120);
         expect(fitsGpu(c.group, c.occupancy)).toBe(true);
       }
-    }
-  });
-});
-
-describe("plate defaults", () => {
-  it("cover every group with valid site letters", () => {
-    for (const g of planeGroups()) {
-      const occ = plateDefaults[g.name];
-      expect(occ, g.name).toBeDefined();
-      for (const letter of Object.keys(occ)) expect(g.sites.some((s) => s.letter === letter), `${g.name} ${letter}`).toBe(true);
-      expect(fitsGpu(g, occ)).toBe(true);
     }
   });
 });

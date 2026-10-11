@@ -41,8 +41,8 @@ export class GpuSystem {
   step = 0;
   stats: GpuStats | null = null;
   runner: ProtocolRunner | null = null;
-  /** user drag: rep index and fractional target in the rep's frame */
-  drag: { rep: number; target: [number, number]; k: number } | null = null;
+  /** pointer touch: a soft repulsive probe (and all its symmetric images) at a fractional position */
+  probe: { at: [number, number]; strength: number; width: number } | null = null;
   paramsDirty = true;
   disposed = false;
   label = "";
@@ -264,7 +264,7 @@ export class GpuEngine {
     u[SYS.potCode] = pp.code;
     u[SYS.latR] = lp.r;
     u[SYS.flags] = params.mcAdapt ? FLAG_MC_ADAPT : 0;
-    i32[SYS.dragRep] = sys.drag ? sys.drag.rep : -1;
+    i32[SYS.probeOn] = sys.probe ? 1 : 0;
     f[SYS.T] = params.T;
     f[SYS.P] = params.P ?? 0;
     f[SYS.gamma] = params.gamma;
@@ -274,10 +274,11 @@ export class GpuEngine {
     f[SYS.rc] = pp.rc;
     f[SYS.shift] = pp.shift;
     f[SYS.forceCap] = Number.isFinite(params.forceCap) ? params.forceCap : 0;
-    f[SYS.dragK] = sys.drag ? sys.drag.k : 0;
-    if (sys.drag) {
-      f[SYS.drag] = sys.drag.target[0];
-      f[SYS.drag + 1] = sys.drag.target[1];
+    f[SYS.probeA] = sys.probe ? sys.probe.strength : 0;
+    if (sys.probe) {
+      f[SYS.probe] = sys.probe.at[0];
+      f[SYS.probe + 1] = sys.probe.at[1];
+      f[SYS.probe + 2] = sys.probe.width;
     }
     const D2 = 4;
     for (let a = 0; a < D2; a++) for (let c = 0; c < lp.r; c++) f[SYS.M + a * L.RMAX + c] = lp.M[a * lp.r + c];

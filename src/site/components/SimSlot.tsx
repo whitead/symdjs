@@ -6,7 +6,7 @@ import { useCanvasSize } from "../hooks/useCanvasSize";
 import { useInView } from "../hooks/useInView";
 import { useReducedMotion } from "../hooks/useReducedMotion";
 import { defaultOccupancy, planeGroup, type Occupancy } from "../lib/groups";
-import { DEFAULT_PARAMS, type ExplainerStage, type SimMode, type SimParams, type SimStats, type SimVariant } from "../sim/types";
+import type { ExplainerStage, SimMode, SimVariant } from "../sim/types";
 import { useGpuSim } from "../sim/useGpuSim";
 import { PauseIcon, PlayIcon } from "./Icons";
 import "../styles/components/sim-slot.css";
@@ -19,18 +19,15 @@ export interface SimSlotProps {
   group?: string;
   /** particles per Wyckoff letter (default: a few general + one special) */
   occupancy?: Occupancy;
-  params?: SimParams;
   /** "How it works" step to illustrate (explainer only) */
   stage?: ExplainerStage;
-  /** throttled (~4 Hz) readouts: phase, density, energy, T, P */
-  onStats?: (s: SimStats) => void;
   /** accessible description of what the simulation shows */
   label?: string;
   /** overlays rendered above the canvas (captions, hints) */
   children?: ReactNode;
 }
 
-const INTERACTIVE: Record<SimVariant, boolean> = { hero: true, card: false, plate: true, explainer: false };
+const INTERACTIVE: Record<SimVariant, boolean> = { hero: true, tile: true, explainer: false };
 
 export function SimSlot({
   variant,
@@ -38,9 +35,7 @@ export function SimSlot({
   className,
   group = "p4m",
   occupancy,
-  params = DEFAULT_PARAMS,
   stage,
-  onStats,
   label,
   children,
 }: SimSlotProps) {
@@ -57,7 +52,7 @@ export function SimSlot({
   const wantsPlay = userPlaying ?? !reducedMotion;
   const mode: SimMode = !wantsPlay ? (userPlaying === false ? "paused" : "static") : inView ? "live" : "paused";
 
-  useGpuSim(canvasRef, size, { variant, group, occupancy: occ, seed, params, stage, interactive: INTERACTIVE[variant], reducedMotion, onStats }, mode);
+  useGpuSim(canvasRef, size, { variant, group, occupancy: occ, seed, stage, interactive: INTERACTIVE[variant], reducedMotion }, mode);
 
   const toggle = useCallback(() => setUserPlaying(!wantsPlay), [wantsPlay]);
 

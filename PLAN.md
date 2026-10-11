@@ -186,6 +186,20 @@ diagrams in the style of an old natural-history atlas.
 * The site is gated: without WebGPU only the notice renders, with no
   previews or fallbacks.
 * Lennard-Jones only (rc = 3σ), with no potential choice in the UI.
+* Page layout (revised 2026-10-10 from owner feedback): hero, then all 17
+  groups in one grid (the only control is the Wyckoff occupancy; each visit
+  starts from a random occupancy), then "How it works". The cabinet, the
+  large plates, the sliders and Release on plates were all removed.
+* The hero and tiles run **live constant-volume dynamics**, not grown
+  crystals: ρ = 0.25, T* = 0.3, γ = 0.1, 60 steps per frame. Particles keep
+  moving as symmetric droplets and chains. Barostat box moves made the old
+  dense crystals jitter. Only the explainer still grows a crystal (NPT), to
+  illustrate the lattice step.
+* Pointer interaction is a bounded "touch": a Gaussian repulsion
+  u = A·exp(−r²/2w²) (A = 6ε, w = 1.4σ) at the cursor and at every
+  symmetric image of it, so the external field stays G-invariant. The old
+  spring drag pulled particles into overlap and made runs diverge. A system
+  whose energy goes non-finite is restarted automatically.
 * Random starts use sequential insertion so that every image stays ≥ 0.9σ
   from every other image. Growth then starts with capped-force LJ, and no
   soft potential is needed.

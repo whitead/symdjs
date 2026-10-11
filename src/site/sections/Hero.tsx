@@ -40,7 +40,7 @@ export function Hero() {
         group={name}
         occupancy={occupancy}
         seed={seed}
-        label={`A live ${name} crystal. Drag a particle and all of its symmetric images follow.`}
+        label={`A live ${name} simulation. Press and drag to stir it.`}
       />
       <div className="hero__veil" aria-hidden="true" />
       <div className="hero__frame" aria-hidden="true" />
@@ -51,13 +51,10 @@ export function Hero() {
         </a>
         <ul className="masthead__links">
           <li>
-            <a href="#cabinet">Cabinet</a>
+            <a href="#atlas">Atlas</a>
           </li>
           <li>
             <a href="#how">How it works</a>
-          </li>
-          <li>
-            <a href="#atlas">Atlas</a>
           </li>
         </ul>
       </nav>
@@ -83,7 +80,7 @@ export function Hero() {
       </div>
 
       <div className="hero__foot">
-        <a className="scroll-cue" href="#cabinet">
+        <a className="scroll-cue" href="#atlas">
           <span className="scroll-cue__line" aria-hidden="true" />
           <span>Begin</span>
           <ArrowDownIcon size={14} />
@@ -91,7 +88,7 @@ export function Hero() {
         <div className="hero__legend">
           <p className="hero__hint">
             <HandIcon size={15} />
-            drag a particle: all its symmetric images follow
+            press and drag to stir: every symmetric copy of your touch is felt
           </p>
           <PlateCaption group={group} kind="Frontispiece" hideNumber extra={occupancyLabel(group, occupancy)} />
         </div>

@@ -46,6 +46,25 @@ export function growProtocol(opts: { P?: number; Tmelt?: number; Tfinal?: number
   };
 }
 
+/**
+ * Constant volume and temperature with real motion: relax the random start
+ * with capped forces, then run Langevin dynamics at a fixed per-orbit
+ * temperature with light friction, so particles keep moving, clustering and
+ * colliding with their own symmetric images.
+ */
+export function liveProtocol(opts: { Tstar?: number; gamma?: number } = {}): Protocol {
+  const T = opts.Tstar ?? 0.3;
+  const gamma = opts.gamma ?? 0.1;
+  return {
+    holdLast: true,
+    stages: [
+      { name: "settling", steps: 600, Tstar: [T, T], P: null, gamma: 5, potential: LJ, forceCap: 20 },
+      // the cap only guards against rare hard collisions
+      { name: "live", steps: 1, Tstar: [T, T], P: null, gamma, potential: LJ, forceCap: 2000 },
+    ],
+  };
+}
+
 /** Tracks progress through a protocol and produces parameters. */
 export class ProtocolRunner {
   stage = 0;

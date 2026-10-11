@@ -1,6 +1,6 @@
 // Pointer interaction and symmetry release for GPU systems.
 
-import { affineInverse, applyAffine, linearPart, wrap01 } from "../engine/math/affine";
+import { linearPart, wrap01 } from "../engine/math/affine";
 import { inverse, matMul } from "../engine/math/linalg";
 import { boxFromParams } from "../engine/groups/bravais";
 import { planeGroup } from "../engine/groups/library";
@@ -8,96 +8,51 @@ import { cellPositions, type SimParams } from "../engine/core/system";
 import type { GpuEngine, GpuSystem } from "../engine/gpu/engine";
 import type { SimView } from "../engine/render/renderer";
 
-export interface Grab {
-  rep: number;
-  op: number;
-  /** lattice translation of the grabbed copy */
-  n: [number, number];
+export interface ProbeOptions {
+  /** amplitude A of the Gaussian repulsion u = A exp(-r²/2w²) (ε) */
+  strength: number;
+  /** width w (σ) */
+  width: number;
 }
 
-/** Find the particle image under a Cartesian point; null if none within `radius` σ. */
-export async function pick(engine: GpuEngine, sys: GpuSystem, x: [number, number], radius = 0.7): Promise<Grab | null> {
-  const { s, B } = await engine.downloadState(sys);
-  const data = sys.data;
-  const img = cellPositions(data, s);
-  const Bi = inverse(B, 2);
-  const f = [Bi[0] * x[0] + Bi[1] * x[1], Bi[2] * x[0] + Bi[3] * x[1]];
-  let best: Grab | null = null;
-  let bestD = radius;
-  for (let q = 0; q < data.nCell; q++) {
-    const d = [f[0] - img[2 * q], f[1] - img[2 * q + 1]];
-    const n: [number, number] = [Math.round(d[0]), Math.round(d[1])];
-    const r = [d[0] - n[0], d[1] - n[1]];
-    const dist = Math.hypot(B[0] * r[0] + B[1] * r[1], B[2] * r[0] + B[3] * r[1]);
-    if (dist < bestD) {
-      bestD = dist;
-      best = { rep: data.imageRep[q], op: data.imageOp[q], n };
-    }
-  }
-  return best;
-}
+const defaultProbe: ProbeOptions = { strength: 6, width: 1.4 };
 
-/** Steer the grabbed rep so that its grabbed copy follows the Cartesian point x. */
-export function dragTo(sys: GpuSystem, grab: Grab, x: [number, number], B: Float64Array, k = 80) {
-  const Bi = inverse(B, 2);
-  const f = [Bi[0] * x[0] + Bi[1] * x[1] - grab.n[0], Bi[2] * x[0] + Bi[3] * x[1] - grab.n[1]];
-  const ginv = affineInverse(sys.group.ops[grab.op]);
-  const t = applyAffine(ginv, f);
-  sys.drag = { rep: grab.rep, target: [wrap01(t[0]), wrap01(t[1])], k };
-}
-
-/** Wire pointer events on a view's canvas. Returns a cleanup function. */
-export function attachDrag(engine: GpuEngine, view: SimView, onGrab?: (g: Grab | null) => void): () => void {
+/**
+ * Press and move on a view's canvas to touch the pattern: a soft repulsive
+ * probe sits under the pointer and at every symmetric image of it, so the
+ * disturbance is mirrored across the crystal. The force is bounded, so the
+ * simulation cannot be driven to blow up. Returns a cleanup function.
+ */
+export function attachProbe(view: SimView, opts: Partial<ProbeOptions> = {}): () => void {
+  const o = { ...defaultProbe, ...opts };
   const canvas = view.canvas;
-  let grab: Grab | null = null;
-  /** pointer currently held down (picking is async; a quick click may end first) */
   let downId: number | null = null;
-  let picking = false;
-  const local = (e: PointerEvent): [number, number] => {
+  const place = (e: PointerEvent) => {
     const r = canvas.getBoundingClientRect();
-    return view.toSim(e.clientX - r.left, e.clientY - r.top);
+    const [x, y] = view.toSim(e.clientX - r.left, e.clientY - r.top);
+    const Bi = inverse(view.B, 2);
+    const f: [number, number] = [wrap01(Bi[0] * x + Bi[1] * y), wrap01(Bi[2] * x + Bi[3] * y)];
+    view.sys.probe = { at: f, strength: o.strength, width: o.width };
   };
-  let lastX: [number, number] = [0, 0];
-  const down = async (e: PointerEvent) => {
-    if (picking || downId !== null || e.button !== 0) return;
+  const down = (e: PointerEvent) => {
+    if (downId !== null || (e.pointerType === "mouse" && e.button !== 0)) return;
     downId = e.pointerId;
-    picking = true;
-    lastX = local(e);
-    const sys = view.sys;
-    let g: Grab | null = null;
-    try {
-      g = await pick(engine, sys, lastX);
-    } catch {
-      g = null;
-    }
-    picking = false;
-    // released (or system swapped) while we were picking: do nothing
-    if (!g || downId !== e.pointerId || view.sys !== sys) return;
-    grab = g;
     try {
       canvas.setPointerCapture(e.pointerId);
     } catch {
       /* pointer already gone */
     }
-    view.setOptions({ highlightRep: g.rep });
-    dragTo(view.sys, g, lastX, view.B);
-    onGrab?.(g);
-    canvas.style.cursor = "grabbing";
+    place(e);
+    canvas.dataset.touching = "true";
   };
   const move = (e: PointerEvent) => {
-    if (e.pointerId !== downId) return;
-    lastX = local(e);
-    if (grab) dragTo(view.sys, grab, lastX, view.B);
+    if (e.pointerId === downId) place(e);
   };
   const up = (e: PointerEvent) => {
     if (e.pointerId !== downId) return;
     downId = null;
-    if (!grab) return;
-    grab = null;
-    view.sys.drag = null;
-    view.setOptions({ highlightRep: -1 });
-    onGrab?.(null);
-    canvas.style.cursor = "";
+    view.sys.probe = null;
+    delete canvas.dataset.touching;
   };
   canvas.addEventListener("pointerdown", down);
   canvas.addEventListener("pointermove", move);
@@ -108,7 +63,7 @@ export function attachDrag(engine: GpuEngine, view: SimView, onGrab?: (g: Grab |
     canvas.removeEventListener("pointermove", move);
     canvas.removeEventListener("pointerup", up);
     canvas.removeEventListener("pointercancel", up);
-    if (grab) view.sys.drag = null;
+    view.sys.probe = null;
   };
 }
 

@@ -33,15 +33,11 @@
   background: transparent;
 }
 
-.sim-slot--card {
+.sim-slot--tile {
   aspect-ratio: 1;
   width: 100%;
   background: var(--paper);
-}
-
-.sim-slot--plate {
-  aspect-ratio: 1;
-  width: 100%;
+  cursor: crosshair;
 }
 
 .sim-slot--explainer {

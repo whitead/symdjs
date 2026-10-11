@@ -12,7 +12,6 @@ import "./styles/base.css";
 import { WebGPUNotice } from "./components/WebGPUNotice";
 import { GpuSupportProvider, useGpuSupport } from "./hooks/useGpuSupport";
 import { Atlas } from "./sections/Atlas";
-import { Cabinet } from "./sections/Cabinet";
 import { Footer } from "./sections/Footer";
 import { Hero } from "./sections/Hero";
 import { HowItWorks } from "./sections/HowItWorks";
@@ -36,9 +35,8 @@ function Page() {
       </a>
       <Hero />
       <main id="main">
-        <Cabinet />
-        <HowItWorks />
         <Atlas />
+        <HowItWorks />
       </main>
       <Footer />
     </>

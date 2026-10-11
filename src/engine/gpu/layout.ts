@@ -62,7 +62,7 @@ export function makeLayout(D: number): Layout {
   const OFF_SITEOF = OFF_COSETS + COSETMAX;
   const OFF_IMG = OFF_SITEOF + NMAX;
   const TOPO_STRIDE = Math.ceil((OFF_IMG + IMGMAX) / 64) * 64;
-  // Sys: 24 scalars, drag vec4 (offset 96 B), M[64]
+  // Sys: 24 scalars, probe vec4 (offset 96 B), M[64]
   const SYSW = 24 + 4 + 64;
   const BOXW = 32;
   const vecW = D === 2 ? 2 : 4;
@@ -94,11 +94,11 @@ export const BOX = {
 export const SYS = {
   n: 0, nCell: 1, nOps: 2, nSites: 3,
   steps: 4, stepStart: 5, seed: 6, nptEvery: 7,
-  potCode: 8, latR: 9, flags: 10, dragRep: 11,
+  potCode: 8, latR: 9, flags: 10, probeOn: 11,
   T: 12, P: 13, gamma: 14, dt: 15,
   eps: 16, sig: 17, rc: 18, shift: 19,
-  forceCap: 20, dragK: 21,
-  drag: 24, // vec4
+  forceCap: 20, probeA: 21,
+  probe: 24, // vec4: fractional x, y, width (σ), unused
   M: 28, // [64], row-major D² × RMAX
 } as const;
 
