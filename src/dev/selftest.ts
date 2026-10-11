@@ -13,6 +13,8 @@ export function runSelftest() {
   window.addEventListener("unhandledrejection", (e) => errors.push(`rejection: ${String(e.reason)}`));
   const at = new URLSearchParams(location.search).get("at");
   if (at) setTimeout(() => document.querySelector(at)?.scrollIntoView({ block: "start" }), 800);
+  let hubFrames = 0;
+  import("../sim/hub").then(({ SimHub }) => SimHub.get().then((hub) => hub.onFrame(() => hubFrames++)));
   let frames = 0;
   const count = () => {
     frames++;
@@ -21,7 +23,8 @@ export function runSelftest() {
   requestAnimationFrame(count);
   const t0 = performance.now();
   setTimeout(() => {
-    const report: string[] = [`UA ${navigator.userAgent}`, `fps ${((frames * 1000) / (performance.now() - t0)).toFixed(1)}`];
+    const secs = (performance.now() - t0) / 1000;
+    const report: string[] = [`UA ${navigator.userAgent}`, `display fps ${(frames / secs).toFixed(1)} · simulation fps ${(hubFrames / secs).toFixed(1)}`];
     const canvases = [...document.querySelectorAll<HTMLCanvasElement>("canvas.sim-slot__canvas")];
     const c2 = document.createElement("canvas");
     const ctx = c2.getContext("2d")!;

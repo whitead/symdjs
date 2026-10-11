@@ -7,7 +7,7 @@ import { Renderer, SimView, type ViewOptions } from "../engine/render/renderer";
 
 export interface HubView {
   view: SimView;
-  /** steps per frame for its system */
+  /** steps per 1/60 s of real time for its system */
   steps: number;
   paused: boolean;
 }
@@ -20,10 +20,16 @@ export class SimHub {
   private listeners = new Set<Listener>();
   private frame = 0;
   private running = false;
-  /** global multiplier on steps per frame, adapted to keep ~60 fps */
+  /** global multiplier on steps per frame, shed when the GPU can't keep up */
   stepScale = 1;
-  private lastTime = 0;
-  private avgDt = 16.7;
+  /**
+   * Frames are capped at this rate, and HubView.steps is per 1/60 s of real
+   * time, so the simulation runs at the same speed on 60, 120 or 144 Hz
+   * displays instead of faster (and hotter) on high-refresh screens.
+   */
+  maxFps = 60;
+  private lastFrame = 0;
+  private avgDt = 1000 / 60;
   private observer: IntersectionObserver;
   private byCanvas = new Map<Element, HubView>();
 
@@ -72,31 +78,34 @@ export class SimHub {
   private start() {
     if (this.running) return;
     this.running = true;
-    const tick = () => {
+    const tick = (t: number) => {
       if (!this.running) return;
-      this.tick();
+      this.tick(t);
       requestAnimationFrame(tick);
     };
     requestAnimationFrame(tick);
   }
 
-  private tick() {
+  private tick(now: number) {
     if (this.engine.lost) return;
+    const minDt = 1000 / this.maxFps;
+    // skip display refreshes beyond the cap (a little slack for timer jitter)
+    if (this.lastFrame && now - this.lastFrame < minDt - 3) return;
+    const dt = this.lastFrame ? Math.min(100, now - this.lastFrame) : minDt;
+    this.lastFrame = now;
     this.frame++;
-    // adapt the simulation load to the frame rate (GPU-bound frames stretch rAF)
-    const now = performance.now();
-    if (this.lastTime) {
-      const dt = Math.min(100, now - this.lastTime);
-      this.avgDt += 0.1 * (dt - this.avgDt);
-      if (this.avgDt > 19) this.stepScale = Math.max(0.1, this.stepScale * 0.95);
-      else if (this.avgDt < 17.5) this.stepScale = Math.min(1, this.stepScale * 1.01);
-    }
-    this.lastTime = now;
+    // GPU-bound frames stretch past the cap: shed simulation load
+    this.avgDt += 0.1 * (dt - this.avgDt);
+    if (this.avgDt > minDt * 1.15) this.stepScale = Math.max(0.1, this.stepScale * 0.95);
+    else if (this.avgDt < minDt * 1.05) this.stepScale = Math.min(1, this.stepScale * 1.01);
+    // steps are given per 1/60 s; scale by the real time this frame covers
+    const timeScale = Math.min(2, dt / (1000 / 60));
     const visible = [...this.views].filter((v) => v.view.visible && !v.view.sys.disposed);
     if (!visible.length) return;
     const steps = new Map<GpuSystem, number>();
     for (const v of visible)
-      if (!v.paused) steps.set(v.view.sys, Math.max(steps.get(v.view.sys) ?? 0, Math.max(1, Math.round(v.steps * this.stepScale))));
+      if (!v.paused)
+        steps.set(v.view.sys, Math.max(steps.get(v.view.sys) ?? 0, Math.max(1, Math.round(v.steps * this.stepScale * timeScale))));
     const encoder = this.engine.device.createCommandEncoder();
     this.engine.step([...steps].map(([sys, s]) => ({ sys, steps: s })), encoder);
     for (const v of visible) v.view.render(encoder);
