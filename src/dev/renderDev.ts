@@ -3,6 +3,7 @@ import { randomConfigs } from "../sim/random";
 import { growProtocol } from "../engine/core/protocol";
 import { occupancyLabel } from "../engine/core/system";
 import { planeGroup } from "../engine/groups/library";
+import { attachDrag, releaseSymmetry, pick, dragTo } from "../sim/interact";
 
 const params = new URLSearchParams(location.search);
 const seed = Number(params.get("seed") ?? 42);
@@ -25,10 +26,29 @@ async function main() {
     const sys = hub.engine.add({ group: cfg.group, occupancy: cfg.occupancy, density: 0.35, seed: cfg.seed });
     sys.setProtocol(growProtocol());
     sys.label = `${cfg.group.name}  ${occupancyLabel(cfg.group, cfg.occupancy)}`;
-    hub.attach(canvas, sys, { span: 14, colorMode: "rep", showCell: true, markReps: true }, 200);
-    cards.push({ sys, label });
+    const hv = hub.attach(canvas, sys, { span: 14, colorMode: "rep", showCell: true, markReps: true }, 200);
+    attachDrag(hub.engine, hv.view);
+    cards.push({ sys, label, hv } as never);
   }
   const status = document.getElementById("status")!;
+  // test hooks
+  (window as any).testRelease = async (i: number) => {
+    const c = (cards as any)[i];
+    const rel = await releaseSymmetry(hub.engine, c.sys);
+    c.sys.dispose();
+    c.sys = rel;
+    rel.label = c.sys.label + " (released)";
+    c.hv.view.setSystem(rel);
+    return { n: rel.data.n };
+  };
+  (window as any).testDrag = async (i: number) => {
+    const c = (cards as any)[i];
+    const g = await pick(hub.engine, c.sys, [0.0, 0.0], 3);
+    if (!g) return null;
+    c.hv.view.setOptions({ highlightRep: g.rep });
+    dragTo(c.sys, g, [3, 2], c.hv.view.B);
+    return g;
+  };
   hub.onFrame((frame) => {
     if (frame % 10) return;
     for (const { sys, label } of cards) {

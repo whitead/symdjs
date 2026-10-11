@@ -103,9 +103,14 @@ fn fs(in: VSOut) -> @location(0) vec4f {
     col = mix(col, view.ink.rgb, ring);
   }
   if ((view.flags & 2u) != 0u && !isRep) { a = a * view.ghostAlpha; }
-  if ((in.kind & 2u) != 0u) {
-    let ring = smoothstep(0.80 - aa, 0.80, r);
-    col = mix(col, view.ink.rgb, ring);
+  if (view.highlightRep >= 0) {
+    if ((in.kind & 2u) != 0u) {
+      // every image of the grabbed particle gets a bold ink ring
+      let ring = smoothstep(0.64 - aa, 0.64, r);
+      col = mix(col, view.ink.rgb, ring);
+    } else {
+      a = a * 0.22;
+    }
   }
   return vec4f(col * a, a);
 }
