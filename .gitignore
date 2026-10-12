@@ -11,3 +11,7 @@ playwright-report/
 
 # Claude Code agent worktrees
 .claude/
+
+# local screen recordings
+*.mov
+*.mp4
