@@ -9,15 +9,35 @@ body {
   background: var(--paper);
 }
 
-.embed__card {
+.embed {
   width: 100%;
   max-width: 26rem;
   margin: 0 auto;
 }
 
+.embed__picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+  padding: 0.4rem 0.65rem;
+  border: 1px solid var(--rule-mid);
+  background: var(--paper-raised);
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
+
+.embed__picker select {
+  min-width: 7rem;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-s);
+  background: var(--paper);
+  cursor: pointer;
+}
+
 .embed__notice {
-  max-width: 26rem;
-  margin: 1rem auto;
   padding: 1rem;
   font-family: var(--font-ui);
   font-size: var(--step--1);

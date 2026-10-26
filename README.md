@@ -33,9 +33,9 @@ Paste this iframe into an HTML page to show one interactive simulation card:
 ```html
 <iframe
   src="https://whitead.github.io/symdjs/embed.html?group=p4m"
-  title="p4m wallpaper group simulation"
+  title="Interactive wallpaper group simulation"
   width="400"
-  height="620"
+  height="720"
   style="max-width: 100%; border: 0;"
   allow="webgpu; fullscreen"
   allowfullscreen
@@ -43,9 +43,9 @@ Paste this iframe into an HTML page to show one interactive simulation card:
 ></iframe>
 ```
 
-Change `p4m` in both `src` and `title` to any of the 17 plane-group names
-shown in the atlas. The iframe keeps the card's play, full-screen, Wyckoff-site,
-and symmetry controls. Give it more height if the host page's font sizing or a
+Change `p4m` in `src` to set the initial group. Visitors can switch among all 17
+groups using the selector above the card. The iframe keeps the card's play,
+full-screen, Wyckoff-site, and symmetry controls. Give it more height if a
 narrow layout makes the card scroll. The host page must allow WebGPU in the iframe.
 
 Dev pages:
