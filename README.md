@@ -44,7 +44,7 @@ Paste this iframe into an HTML page to show one interactive simulation card:
 ```
 
 Change `p4m` in `src` to set the initial group. Visitors can switch among all 17
-groups using the selector above the card. The iframe keeps the card's play,
+groups using the controls below the simulation. The iframe keeps the card's play,
 full-screen, Wyckoff-site, and symmetry controls. Give it more height if a
 narrow layout makes the card scroll. The host page must allow WebGPU in the iframe.
 

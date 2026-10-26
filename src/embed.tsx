@@ -8,11 +8,59 @@ import "./site/styles/tokens.css";
 import "./site/styles/base.css";
 import "./site/styles/embed.css";
 import { Tile } from "./site/components/Tile";
+import { ChevronLeftIcon, ChevronRightIcon } from "./site/components/Icons";
+import { HM } from "./site/components/GroupSymbol";
 import { GpuSupportProvider, useGpuSupport } from "./site/hooks/useGpuSupport";
-import { planeGroups, randomOccupancy } from "./site/lib/groups";
+import { planeGroups, randomOccupancy, toRoman } from "./site/lib/groups";
 import { Rng } from "./engine/math/rng";
 
 const groups = planeGroups();
+
+function GroupNavigation({ selectedName, onChange }: { selectedName: string; onChange: (name: string) => void }) {
+  const index = groups.findIndex((group) => group.name === selectedName);
+  const previous = index < 0 ? null : groups[(index - 1 + groups.length) % groups.length];
+  const next = index < 0 ? null : groups[(index + 1) % groups.length];
+
+  return (
+    <nav className="embed__navigation" aria-label="Wallpaper group navigation">
+      <button
+        type="button"
+        className="embed__step"
+        onClick={() => previous && onChange(previous.name)}
+        disabled={!previous}
+        aria-label={`Previous wallpaper group${previous ? `: ${previous.name}` : ""}`}
+        title={previous?.name}
+      >
+        <ChevronLeftIcon size={19} />
+      </button>
+      <div className="embed__choice">
+        <p className="embed__index">
+          Plane group {index < 0 ? "" : <><span>{toRoman(index + 1)}</span> / {toRoman(groups.length)}</>}
+        </p>
+        <div className="embed__select-wrap">
+          <label className="visually-hidden" htmlFor="embed-group">Wallpaper group</label>
+          <span className="embed__selected" aria-hidden="true">
+            {index < 0 ? "Choose a group" : <HM name={selectedName} />}
+          </span>
+          <select id="embed-group" value={index < 0 ? "" : selectedName} onChange={(event) => onChange(event.currentTarget.value)}>
+            {index < 0 && <option value="" disabled>Choose a group</option>}
+            {groups.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}
+          </select>
+        </div>
+      </div>
+      <button
+        type="button"
+        className="embed__step"
+        onClick={() => next && onChange(next.name)}
+        disabled={!next}
+        aria-label={`Next wallpaper group${next ? `: ${next.name}` : ""}`}
+        title={next?.name}
+      >
+        <ChevronRightIcon size={19} />
+      </button>
+    </nav>
+  );
+}
 
 function Embed() {
   const { supported } = useGpuSupport();
@@ -24,24 +72,24 @@ function Embed() {
     url.searchParams.set("group", name);
     window.history.replaceState(window.history.state, "", url);
   };
+  const navigation = <GroupNavigation selectedName={selectedName} onChange={changeGroup} />;
 
   return (
     <main className="embed">
-      <div className="embed__picker">
-        <label htmlFor="embed-group">Wallpaper group</label>
-        <select id="embed-group" value={group?.name ?? ""} onChange={(event) => changeGroup(event.currentTarget.value)}>
-          {!group && <option value="" disabled>Choose a group</option>}
-          {groups.map((option) => <option key={option.name} value={option.name}>{option.name}</option>)}
-        </select>
-      </div>
       {!group ? (
-        <p className="embed__notice">
-          Unknown wallpaper group “{selectedName}”. Choose a group above or visit the <a href="./">atlas</a>.
-        </p>
+        <>
+          {navigation}
+          <p className="embed__notice">
+            Unknown wallpaper group “{selectedName}”. Choose a group above or visit the <a href="./">atlas</a>.
+          </p>
+        </>
       ) : !supported ? (
-        <p className="embed__notice">
-          This simulation needs WebGPU in a supported browser. <a href="./">Open the atlas</a> to learn more.
-        </p>
+        <>
+          {navigation}
+          <p className="embed__notice">
+            This simulation needs WebGPU in a supported browser. <a href="./">Open the atlas</a> to learn more.
+          </p>
+        </>
       ) : (
         <ol className="embed__card" aria-label={`${group.name} wallpaper group simulation`}>
           <Tile
@@ -50,6 +98,7 @@ function Embed() {
             initial={randomOccupancy(group, new Rng(1 + 101 * group.number))}
             seed={1 + 101 * group.number}
             pressure={null}
+            afterVisualization={navigation}
           />
         </ol>
       )}
