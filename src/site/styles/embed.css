@@ -1,0 +1,24 @@
+/* A single atlas card inside a host page's iframe. */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--paper);
+}
+
+.embed__card {
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+}
+
+.embed__notice {
+  max-width: 26rem;
+  margin: 1rem auto;
+  padding: 1rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
