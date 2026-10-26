@@ -2,7 +2,7 @@
 // symmetry diagram, the Wyckoff sites you can fill, and a switch to release
 // the symmetry.
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import type { Group } from "../../engine/groups/group";
 import { cellCount, toRoman, type Occupancy } from "../lib/groups";
 import { Button } from "./Button";
@@ -19,9 +19,11 @@ export interface TileProps {
   seed: number;
   /** barostat pressure shared by the atlas (negative = tension; null = fixed volume) */
   pressure: number | null;
+  /** optional controls directly beneath the simulation */
+  afterVisualization?: ReactNode;
 }
 
-export function Tile({ group, initial, seed, pressure }: TileProps) {
+export function Tile({ group, initial, seed, pressure, afterVisualization }: TileProps) {
   const [occupancy, setOccupancy] = useState<Occupancy>(initial);
   const [released, setReleased] = useState(false);
   // a released crystal has no Wyckoff sites to edit: editing restores the symmetry
@@ -42,6 +44,7 @@ export function Tile({ group, initial, seed, pressure }: TileProps) {
           label={`Live ${group.name} simulation${released ? " with its symmetry released" : ""}. Press and move to touch it.`}
         />
       </div>
+      {afterVisualization}
       <div className="tile__label">
         <div className="tile__head">
           <p className="tile__no">{toRoman(group.number)}</p>

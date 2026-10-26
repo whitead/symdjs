@@ -26,6 +26,28 @@ npm run build      # static site in dist/
 You need a browser with WebGPU: recent Chrome or Edge, Safari 26+, or
 Firefox on Windows or macOS. Without WebGPU, the site shows only a notice.
 
+## Embed one wallpaper group
+
+Paste this iframe into an HTML page to show one interactive simulation card:
+
+```html
+<iframe
+  src="https://whitead.github.io/symdjs/embed.html?group=p4m"
+  title="Interactive wallpaper group simulation"
+  width="400"
+  height="720"
+  style="max-width: 100%; border: 0;"
+  allow="webgpu; fullscreen"
+  allowfullscreen
+  loading="lazy"
+></iframe>
+```
+
+Change `p4m` in `src` to set the initial group. Visitors can switch among all 17
+groups using the controls below the simulation. The iframe keeps the card's play,
+full-screen, Wyckoff-site, and symmetry controls. Give it more height if a
+narrow layout makes the card scroll. The host page must allow WebGPU in the iframe.
+
 Dev pages:
 * `/render.html`: 8 random crystals.
 * `/diagrams.html`: symmetry diagrams for all 17 groups.

@@ -1,0 +1,130 @@
+/* A single atlas card inside a host page's iframe. */
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  background: var(--paper);
+}
+
+.embed {
+  width: 100%;
+  max-width: 26rem;
+  margin: 0 auto;
+}
+
+.embed .tile {
+  grid-template-rows: auto auto auto 1fr auto;
+}
+
+.embed .tile__no {
+  display: none;
+}
+
+.embed__navigation {
+  display: grid;
+  grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0.5rem 0.5rem 0;
+  padding: 0.35rem 0.55rem;
+  border-block: 1px solid var(--rule-mid);
+  background: var(--paper-raised);
+}
+
+.embed__step {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  padding: 0;
+  border: 1px solid var(--rule-mid);
+  border-radius: var(--radius-xs);
+  background: var(--paper);
+  color: var(--ink-2);
+  cursor: pointer;
+  box-shadow: var(--shadow-card);
+}
+
+.embed__step:hover:not(:disabled) {
+  background: var(--paper-deep);
+  color: var(--accent-ink);
+}
+
+.embed__step:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.embed__choice {
+  min-width: 0;
+  text-align: center;
+}
+
+.embed__index {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: var(--tracking-caps);
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.embed__select-wrap {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+  border-radius: var(--radius-xs);
+}
+
+.embed__select-wrap:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.embed__select-wrap::after {
+  position: absolute;
+  right: 0.2rem;
+  top: 38%;
+  width: 0.35rem;
+  height: 0.35rem;
+  border-right: 1px solid currentColor;
+  border-bottom: 1px solid currentColor;
+  content: "";
+  transform: rotate(45deg);
+  pointer-events: none;
+}
+
+.embed__selected {
+  display: block;
+  padding: 0 1.05rem 0 0.3rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.embed__ordinal {
+  color: var(--mark-ink);
+}
+
+.embed__divider {
+  color: var(--ink-4);
+}
+
+.embed__select-wrap select {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.embed__notice {
+  padding: 1rem;
+  font-family: var(--font-ui);
+  font-size: var(--step--1);
+}
