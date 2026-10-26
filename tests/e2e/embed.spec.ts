@@ -8,6 +8,9 @@ test("embeds one selected wallpaper group card", async ({ page }) => {
 
   await expect(card.locator(".tile")).toHaveCount(1);
   await expect(card.locator(".tile__name")).toContainText("p4g");
+  await expect(card.locator(".embed__selected")).toContainText("XII / XVII");
+  await expect(card.locator(".embed__selected")).not.toContainText("p4g");
+  await expect(card.locator(".tile__no")).toBeHidden();
   const selector = card.getByRole("combobox", { name: /Wallpaper group/ });
   await expect(selector).toHaveValue("p4g");
   await expect(card.getByRole("button", { name: "Pause simulation" })).toBeVisible();

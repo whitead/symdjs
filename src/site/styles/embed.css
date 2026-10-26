@@ -19,6 +19,10 @@ body {
   grid-template-rows: auto auto auto 1fr auto;
 }
 
+.embed .tile__no {
+  display: none;
+}
+
 .embed__navigation {
   display: grid;
   grid-template-columns: 2.25rem minmax(0, 1fr) 2.25rem;
@@ -67,10 +71,6 @@ body {
   color: var(--ink-3);
 }
 
-.embed__index span {
-  color: var(--mark-ink);
-}
-
 .embed__select-wrap {
   position: relative;
   width: fit-content;
@@ -101,9 +101,17 @@ body {
   display: block;
   padding: 0 1.05rem 0 0.3rem;
   font-family: var(--font-display);
-  font-size: 1.3rem;
+  font-size: 1.35rem;
   line-height: 1.2;
   color: var(--ink);
+}
+
+.embed__ordinal {
+  color: var(--mark-ink);
+}
+
+.embed__divider {
+  color: var(--ink-4);
 }
 
 .embed__select-wrap select {

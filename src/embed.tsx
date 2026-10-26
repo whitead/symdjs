@@ -9,7 +9,6 @@ import "./site/styles/base.css";
 import "./site/styles/embed.css";
 import { Tile } from "./site/components/Tile";
 import { ChevronLeftIcon, ChevronRightIcon } from "./site/components/Icons";
-import { HM } from "./site/components/GroupSymbol";
 import { GpuSupportProvider, useGpuSupport } from "./site/hooks/useGpuSupport";
 import { planeGroups, randomOccupancy, toRoman } from "./site/lib/groups";
 import { Rng } from "./engine/math/rng";
@@ -34,13 +33,17 @@ function GroupNavigation({ selectedName, onChange }: { selectedName: string; onC
         <ChevronLeftIcon size={19} />
       </button>
       <div className="embed__choice">
-        <p className="embed__index">
-          Plane group {index < 0 ? "" : <><span>{toRoman(index + 1)}</span> / {toRoman(groups.length)}</>}
-        </p>
+        <p className="embed__index">Browse plane groups</p>
         <div className="embed__select-wrap">
           <label className="visually-hidden" htmlFor="embed-group">Wallpaper group</label>
           <span className="embed__selected" aria-hidden="true">
-            {index < 0 ? "Choose a group" : <HM name={selectedName} />}
+            {index < 0 ? "Choose a group" : (
+              <>
+                <span className="embed__ordinal">{toRoman(index + 1)}</span>
+                <span className="embed__divider"> / </span>
+                {toRoman(groups.length)}
+              </>
+            )}
           </span>
           <select id="embed-group" value={index < 0 ? "" : selectedName} onChange={(event) => onChange(event.currentTarget.value)}>
             {index < 0 && <option value="" disabled>Choose a group</option>}
